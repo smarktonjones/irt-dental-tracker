@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRT Dental Mission Production Tracker (FY25/CY26)</title>
+    <style>
+        :root {
+            --primary-color: #2b4c7e;
+            --secondary-color: #4a6fa5;
+            --success-color: #2e7d32;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #dbe2ef;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 { margin: 0; font-size: 24px; }
+        header p { margin: 5px 0 0 0; opacity: 0.9; font-size: 14px; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 3fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1100px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .card h3 { margin-top: 0; margin-bottom: 15px; color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 5px; }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-primary { background-color: var(--primary-color); color: white; width: 100%; }
+        .btn-primary:hover { background-color: var(--secondary-color); }
+        
+        .btn-success { background-color: var(--success-color); color: white; margin-right: 10px; margin-bottom: 5px; }
+        .btn-success:hover { opacity: 0.9; }
+
+        .actions-panel {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f1f4f9;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        tr:hover { background-color: #f9fbfd; }
+
+        .total-row {
+            background-color: #eef2f7 !important;
+            font-weight: bold;
+            color: #1e3a61;
+        }
+
+        .doctor-summaries {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .doctor-summary-box {
+            background-color: #f4f7f6;
+            border-left: 4px solid var(--success-color);
+            padding: 12px;
+            border-radius: 0 4px 4px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .doctor-summary-box h4 { margin: 0 0 5px 0; color: #1b5e20; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>IRT Dental Operational Workload Tracker</h1>
+        <p>Production Master Log — Unified 2024 Baseline, 2025 Additions, and CY2026 CDT/DWV Rates</p>
+    </header>
+
+    <div class="grid">
+        <div>
+            <div class="card">
+                <h3>Log New Workload</h3>
+                <form id="logForm">
+                    <div class="form-group">
+                        <label for="logDate">Date</label>
+                        <input type="date" id="logDate" required value="2026-06-22">
+                    </div>
+                    <div class="form-group">
+                        <label for="providerName">Provider Name</label>
+                        <select id="providerName" required>
+                            <option value="LCDR Willes">LCDR Willes</option>
+                            <option value="LCDR Warner">LCDR Warner</option>
+                            <option value="CAPT Meymand">CAPT Meymand</option>
+                            <option value="CDR Thai">CDR Thai</option>
+                            <option value="CDR Buzzell">CDR Buzzell</option>
+                            <option value="LTC Morgan">LTC Morgan</option>
+                            <option value="MAJ Caldon">MAJ Caldon</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceBranch">Service Branch</label>
+                        <select id="serviceBranch" required>
+                            <option value="USNR">USNR</option>
+                            <option value="USARC">USARC</option>
+                            <option value="ANG">ANG</option>
+                            <option value="USPHS">USPHS</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="procedureCode">Procedure Code</label>
+                        <select id="procedureCode" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="quantity">Number of Procedures</label>
+                        <input type="number" id="quantity" min="1" value="1" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Add Entry to Log</button>
+                </form>
+            </div>
+        </div>
+
+        <div>
+            <div class="card">
+                <h3>Production Ledger & Mission Controls</h3>
+                <div class="actions-panel">
+                    <button class="btn-success" onclick="exportDailyLogCSV()">📥 Export Daily Ledger CSV</button>
+                    <button class="btn-success" onclick="exportMissionSummaryCSV()">📊 Export Mission Summary by Doctor CSV</button>
+                    <button style="background-color: #cb2424; color: white;" onclick="clearLogs()">Reset Form Data</button>
+                </div>
+
+                <div style="overflow-x:auto;">
+                    <table id="ledgerTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Provider</th>
+                                <th>Branch</th>
+                                <th>Code</th>
+                                <th>Nomenclature Description</th>
+                                <th>Base DWV</th>
+                                <th>Count</th>
+                                <th>Total DWV</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledgerBody">
+                            </tbody>
+                    </table>
+                </div>
+
+                <h3 style="margin-top: 35px;">Live Doctor Aggregates (DWV Totals)</h3>
+                <div id="doctorSummaryContainer" class="doctor-summaries">
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Completely unrolled code dataset representing all reference metrics without any placeholders
+    const cdtRates = {
+        "A9999": { name: "Patient Seating (Encounter)", dwv: 0.00 },
+        "D0120": { name: "Periodic oral evaluation – established patient", dwv: 0.62 },
+        "D0140": { name: "Limited oral evaluation – problem focused", dwv: 0.93 },
+        "D0145": { name: "Oral evaluation for a patient under three years of age and counseling with primary caregiver", dwv: 0.91 },
+        "D0150": { name: "Comprehensive oral evaluation – new or established patient", dwv: 1.05 },
+        "D0160": { name: "Detailed and extensive oral evaluation – problem focused, by report", dwv: 1.58 },
+        "D0171": { name: "Re-evaluation – post-operative office visit", dwv: 0.75 },
+        "D0190": { name: "Screening of a patient", dwv: 0.50 },
+        "D0210": { name: "Intraoral - comprehensive series of radiographic images", dwv: 1.64 },
+        "D0220": { name: "Intraoral – periapical first radiographic image", dwv: 0.36 },
+        "D0230": { name: "Intraoral – periapical each additional radiographic image", dwv: 0.30 },
+        "D0240": { name: "Intraoral – occlusal radiographic image", dwv: 0.44 },
+        "D0270": { name: "Bitewing – single radiographic image", dwv: 0.37 },
+        "D0272": { name: "Bitewings – two radiographic images", dwv: 0.55 },
+        "D0273": { name: "Bitewings – three radiographic images", dwv: 0.63 },
+        "D0274": { name: "Bitewings – four radiographic images", dwv: 0.77 },
+        "D0330": { name: "Panoramic radiographic image", dwv: 1.15 },
+        "D1110": { name: "Prophylaxis – adult", dwv: 1.15 },
+        "D1120": { name: "Prophylaxis – child", dwv: 0.84 },
+        "D1206": { name: "Topical application of fluoride varnish", dwv: 0.33 },
+        "D1208": { name: "Topical application of fluoride - excluding varnish", dwv: 0.33 },
+        "D1351": { name: "Sealant - per tooth / Prevention Counseling Proxy", dwv: 0.57 },
+        "D2140": { name: "Amalgam - one surface, primary or permanent", dwv: 1.56 },
+        "D2150": { name: "Amalgam - two surfaces, primary or permanent", dwv: 1.93 },
+        "D2160": { name: "Amalgam - three surfaces, primary or permanent", dwv: 2.29 },
+        "D2161": { name: "Amalgam - four or more surfaces, primary or permanent", dwv: 2.76 },
+        "D2330": { name: "Resin-based composite - one surface, anterior", dwv: 1.68 },
+        "D2331": { name: "Resin-based composite - two surfaces, anterior", dwv: 2.08 },
+        "D2332": { name: "Resin-based composite - three surfaces, anterior", dwv: 2.50 },
+        "D2335": { name: "Resin-based composite - four or more surfaces or involving incisal angle (anterior)", dwv: 3.09 },
+        "D2390": { name: "Resin-based composite crown, anterior", dwv: 3.44 },
+        "D2391": { name: "Resin-based composite - one surface, posterior", dwv: 1.82 },
+        "D2392": { name: "Resin-based composite - two surfaces, posterior", dwv: 2.34 },
+        "D2393": { name: "Resin-based composite - three surfaces, posterior", dwv: 2.87 },
+        "D2394": { name: "Resin-based composite - four or more surfaces, posterior", dwv: 3.53 },
+        "D2930": { name: "Prefabricated stainless steel crown - primary tooth", dwv: 2.44 },
+        "D2931": { name: "Prefabricated stainless steel crown - permanent tooth", dwv: 2.68 },
+        "D2940": { name: "Protective restoration / Sealant deployment tracking", dwv: 0.85 },
+        "D2956": { name: "Removal of an indirect restoration on a natural tooth", dwv: 1.93 },
+        "D3220": { name: "Therapeutic pulpotomy (excluding final restoration)", dwv: 1.70 },
+        "D3221": { name: "Pulpal debridement, primary and permanent teeth", dwv: 1.75 },
+        "D3310": { name: "Endodontic therapy, anterior tooth (excluding final restoration)", dwv: 6.94 },
+        "D3320": { name: "Endodontic therapy, premolar tooth (excluding final restoration)", dwv: 8.16 },
+        "D3330": { name: "Endodontic therapy, molar tooth (excluding final restoration)", dwv: 10.37 },
+        "D4341": { name: "Periodontal scaling and root planing - four or more teeth per quadrant", dwv: 2.11 },
+        "D4342": { name: "Periodontal scaling and root planing - one to three teeth per quadrant", dwv: 1.48 },
+        "D4346": { name: "Scaling in presence of generalized moderate or severe gingival inflammation", dwv: 1.15 },
+        "D4355": { name: "Full mouth debridement to enable comprehensive evaluation and diagnosis", dwv: 1.48 },
+        "D4910": { name: "Periodontal maintenance", dwv: 1.34 },
+        "D5110": { name: "Complete denture - maxillary", dwv: 12.01 },
+        "D5120": { name: "Complete denture - mandibular", dwv: 12.01 },
+        "D5211": { name: "Maxillary partial denture - resin base", dwv: 10.98 },
+        "D5212": { name: "Mandibular partial denture - resin base", dwv: 10.98 },
+        "D5410": { name: "Adjust complete denture - maxillary", dwv: 0.77 },
+        "D5411": { name: "Adjust complete denture - mandibular", dwv: 0.77 },
+        "D6180": { name: "Implant maintenance procedures when a full arch fixed hybrid prosthesis is not removed", dwv: 1.53 },
+        "D6193": { name: "Replacement of an implant screw", dwv: 2.15 },
+        "D7111": { name: "Extraction, coronal remnants - primary tooth", dwv: 1.02 },
+        "D7140": { name: "Extraction, erupted tooth or exposed root (elevation and/or forceps removal)", dwv: 1.42 },
+        "D7210": { name: "Extraction, erupted tooth requiring removal of bone and/or sectioning of tooth", dwv: 2.54 },
+        "D7220": { name: "Removal of impacted tooth - soft tissue", dwv: 3.16 },
+        "D7230": { name: "Removal of impacted tooth - partially bony", dwv: 4.15 },
+        "D7240": { name: "Removal of impacted tooth - completely bony", dwv: 4.90 },
+        "D7250": { name: "Removal of residual tooth roots (cutting procedure)", dwv: 3.62 },
+        "D7252": { name: "Partial extraction for immediate implant placement", dwv: 4.28 },
+        "D7259": { name: "Nerve dissection surgical isolation procedure", dwv: 9.25 },
+        "D7310": { name: "Alveoloplasty in conjunction with extractions - four or more teeth or tooth spaces per quadrant", dwv: 3.57 },
+        "D7311": { name: "Alveoloplasty in conjunction with extractions - one to three teeth or tooth spaces per quadrant", dwv: 3.00 },
+        "D7510": { name: "Incision and drainage of abscess - intraoral soft tissue", dwv: 2.56 },
+        "D7511": { name: "Incision and drainage of abscess - intraoral soft tissue - complicated", dwv: 4.92 },
+        "D7520": { name: "Incision and drainage of abscess - extraoral soft tissue", dwv: 16.60 },
+        "D7910": { name: "Suture of recent small wounds up to 5 cm", dwv: 4.16 },
+        "D7911": { name: "Complicated suture - up to 5 cm", dwv: 14.13 },
+        "D8091": { name: "Comprehensive orthodontic treatment with orthognathic surgery", dwv: 36.18 },
+        "D8695": { name: "Removal of fixed orthodontic appliances for reasons other than completion of treatment", dwv: 2.47 },
+        "D9110": { name: "Palliative treatment of dental pain - per visit", dwv: 1.38 },
+        "D9211": { name: "Regional block anesthesia", dwv: 0.62 },
+        "D9215": { name: "Local anesthesia in conjunction with operative or surgical procedures", dwv: 0.39 },
+        "D9310": { name: "Consultation – diagnostic service provided by dentist or physician", dwv: 1.47 },
+        "D9630": { name: "Drugs or medicaments dispensed in the office for home use", dwv: 0.34 }
+    };
+
+    // System Log Storage Engine
+    let logs = JSON.parse(localStorage.getItem('irt_dental_logs')) || [
+        { date: "2026-06-22", provider: "LCDR Willes", branch: "USNR", code: "D0150", qty: 4 },
+        { date: "2026-06-22", provider: "LCDR Warner", branch: "USNR", code: "D7230", qty: 2 },
+        { date: "2026-06-22", provider: "CAPT Meymand", branch: "USNR", code: "D7259", qty: 1 },
+        { date: "2026-06-22", provider: "CDR Thai", branch: "USNR", code: "D3330", qty: 1 },
+        { date: "2026-06-22", provider: "CDR Buzzell", branch: "USNR", code: "D2956", qty: 3 }
+    ];
+
+    // Build the dynamic UI lookup dropdown on initialization
+    function populateDropdown() {
+        const select = document.getElementById('procedureCode');
+        select.innerHTML = '';
+        Object.keys(cdtRates).sort().forEach(code => {
+            const opt = document.createElement('option');
+            opt.value = code;
+            opt.textContent = `${code} - ${cdtRates[code].name} (DWV: ${cdtRates[code].dwv.toFixed(2)})`;
+            select.appendChild(opt);
+        });
+    }
+
+    // Refresh layout views and calculate totals dynamically
+    function renderTrackerLedger() {
+        localStorage.setItem('irt_dental_logs', JSON.stringify(logs));
+        const tbody = document.getElementById('ledgerBody');
+        tbody.innerHTML = '';
+        
+        let aggregatedProcedures = 0;
+        let aggregatedDWV = 0;
+        let providerBreakdowns = {};
+
+        // Loop and paint logs
+        logs.forEach(entry => {
+            const currentMeta = cdtRates[entry.code] || { name: "Unknown Entry Lookup", dwv: 0.00 };
+            const computedRowDWV = currentMeta.dwv * entry.qty;
+            
+            aggregatedProcedures += parseInt(entry.qty);
+            aggregatedDWV += computedRowDWV;
+
+            if (!providerBreakdowns[entry.provider]) {
+                providerBreakdowns[entry.provider] = { branch: entry.branch, counts: 0, sumDWV: 0.0 };
+            }
+            providerBreakdowns[entry.provider].counts += parseInt(entry.qty);
+            providerBreakdowns[entry.provider].sumDWV += computedRowDWV;
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${entry.date}</td>
+                <td>${entry.provider}</td>
+                <td>${entry.branch}</td>
+                <td><strong>${entry.code}</strong></td>
+                <td>${currentMeta.name}</td>
+                <td>${currentMeta.dwv.toFixed(2)}</td>
+                <td>${entry.qty}</td>
+                <td><strong>${computedRowDWV.toFixed(2)}</strong></td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // Append Table Base Totals Row
+        if (logs.length > 0) {
+            const summaryRow = document.createElement('tr');
+            summaryRow.className = 'total-row';
+            summaryRow.innerHTML = `
+                <td colspan="5">LEDGER SUMMARY GRAND TOTALS</td>
+                <td>-</td>
+                <td>${aggregatedProcedures}</td>
+                <td>${aggregatedDWV.toFixed(2)}</td>
+            `;
+            tbody.appendChild(summaryRow);
+        } else {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#888; padding: 20px;">No provider production logs registered yet.</td></tr>`;
+        }
+
+        // Render Individual Doctors Totals Dashboard widgets (Row requirements at bottom)
+        const blockContainer = document.getElementById('doctorSummaryContainer');
+        blockContainer.innerHTML = '';
+        
+        Object.keys(providerBreakdowns).sort().forEach(providerKey => {
+            const pData = providerBreakdowns[providerKey];
+            const widget = document.createElement('div');
+            widget.className = 'doctor-summary-box';
+            widget.innerHTML = `
+                <h4>${providerKey}</h4>
+                <small style="color:#666; font-weight:600;">Branch: ${pData.branch}</small>
+                <div style="margin-top:5px;">Procedures: <strong>${pData.counts}</strong></div>
+                <div>Mission DWV Total: <strong style="color:var(--success-color);">${pData.sumDWV.toFixed(2)}</strong></div>
+            `;
+            blockContainer.appendChild(widget);
+        });
+    }
+
+    // Capture standard workflow additions
+    document.getElementById('logForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const item = {
+            date: document.getElementById('logDate').value,
+            provider: document.getElementById('providerName').value,
+            branch: document.getElementById('serviceBranch').value,
+            code: document.getElementById('procedureCode').value,
+            qty: parseInt(document.getElementById('quantity').value)
+        };
+        logs.push(item);
+        renderTrackerLedger();
+        document.getElementById('quantity').value = 1;
+    });
+
+    // Reset storage log handler
+    function clearLogs() {
+        if (confirm("Are you sure you want to clear the ledger? All stored entries will be reset.")) {
+            logs = [];
+            renderTrackerLedger();
+        }
+    }
+
+    // Export Option 1: Detailed Daily Ledger Export with Cross-Check Column
+    function exportDailyLogCSV() {
+        let csv = "Date,Provider Name,Service Branch,CDT Code,Procedure Nomenclature,Base DWV Value,Procedure Counts,Calculated Total DWV\n";
+        
+        logs.forEach(line => {
+            const codeData = cdtRates[line.code] || { name: "Unknown", dwv: 0.00 };
+            const totalDWV = codeData.dwv * line.qty;
+            csv += [
+                line.date,
+                `"${line.provider}"`,
+                line.branch,
+                line.code,
+                `"${codeData.name}"`,
+                codeData.dwv.toFixed(2),
+                line.qty,
+                totalDWV.toFixed(2)
+            ].join(",") + "\n";
+        });
+
+        triggerCSVDownload(csv, "IRT_Daily_Ledger_Production_Report.csv");
+    }
+
+    // Export Option 2: Consolidated Mission Summary grouped purely by Doctor
+    function exportMissionSummaryCSV() {
+        let summaryMap = {};
+        logs.forEach(line => {
+            const codeData = cdtRates[line.code] || { name: "Unknown", dwv: 0.00 };
+            const lineDWV = codeData.dwv * line.qty;
+            if (!summaryMap[line.provider]) {
+                summaryMap[line.provider] = { branch: line.branch, procedures: 0, totalDWV: 0.0 };
+            }
+            summaryMap[line.provider].procedures += parseInt(line.qty);
+            summaryMap[line.provider].totalDWV += lineDWV;
+        });
+
+        let csv = "Provider Name,Service Branch,Total Compiled Procedures,Total Aggregated DWV Credit\n";
+        Object.keys(summaryMap).forEach(doc => {
+            const item = summaryMap[doc];
+            csv += [
+                `"${doc}"`,
+                item.branch,
+                item.procedures,
+                item.totalDWV.toFixed(2)
+            ].join(",") + "\n";
+        });
+
+        triggerCSVDownload(csv, "IRT_Mission_Summary_By_Doctor.csv");
+    }
+
+    // Core execution agent helper for standard browser download triggers
+    function triggerCSVDownload(content, filename) {
+        const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        if (navigator.msSaveBlob) { 
+            navigator.msSaveBlob(blob, filename);
+        } else {
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+
+    // Initialize application runtime lifecycle
+    window.onload = function() {
+        populateDropdown();
+        renderTrackerLedger();
+    };
+</script>
+
+</body>
+</html>
