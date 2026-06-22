@@ -7,6 +7,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
     <style>
         :root {
             --primary: #1e3a8a;
@@ -82,14 +86,59 @@
         .search-container { position: relative; margin-bottom: 16px; }
         .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-600); }
         .search-input { padding-left: 36px; }
+        
+        .auth-toggle-text { text-align: center; margin-top: 14px; font-size: 0.85rem; color: var(--gray-600); cursor: pointer; }
+        .auth-toggle-text span { color: var(--primary-light); font-weight: 600; text-decoration: underline; }
+        .user-profile-badge { font-size: 0.8rem; color: var(--gray-600); text-align: center; margin-bottom: 10px; font-style: italic; }
     </style>
 </head>
 <body>
 
 <div class="container">
 
-    <div id="screen-setup" class="card">
+    <div id="screen-auth" class="card">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <i class="fa-solid fa-user-shield" style="font-size: 3rem; color: var(--primary);"></i>
+            <h2 style="justify-content: center; margin-top: 10px;" id="auth-title">Provider Portal Sign In</h2>
+            <p style="font-size: 0.85rem; color: var(--gray-600);" id="auth-subtitle">Access authorized dental operational logs</p>
+        </div>
+        
+        <div class="form-group">
+            <label for="auth-email">Military / Government Email Address</label>
+            <input type="email" id="auth-email" placeholder="doctor@mail.mil">
+        </div>
+        
+        <div class="form-group">
+            <label for="auth-password">Account Access Key / Password</label>
+            <input type="password" id="auth-password" placeholder="••••••••">
+        </div>
+
+        <div id="auth-registration-fields" class="hidden">
+            <div class="form-group">
+                <label for="auth-name">Full Name & Rank</label>
+                <input type="text" id="auth-name" placeholder="LCDR Jones">
+            </div>
+            <div class="form-group">
+                <label for="auth-branch">Service Branch Component</label>
+                <select id="auth-branch">
+                    <option value="USNR">USNR (Navy Reserve)</option>
+                    <option value="USARC">USARC (Army Reserve)</option>
+                    <option value="ANG">ANG (Air National Guard)</option>
+                    <option value="USPHS">USPHS (Public Health Service)</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" id="auth-submit-btn" onclick="handleAuthSubmission()"><i class="fa-solid fa-lock-open"></i> Authorize Credential</button>
+        
+        <div class="auth-toggle-text" id="auth-toggle-trigger" onclick="toggleAuthMode()">
+            Don't have an active tracker profile? <span>Register Account Here</span>
+        </div>
+    </div>
+
+    <div id="screen-setup" class="card hidden">
         <h2><i class="fa-solid fa-gear"></i> Mission Configuration</h2>
+        <div class="user-profile-badge" id="setup-profile-string">Logged in as: Unknown Provider</div>
         <p style="font-size:0.9rem; color: var(--gray-600); margin-bottom:20px;">Initialize the mission data store metrics. Enter provider metadata info below.</p>
         
         <div class="form-group">
@@ -126,9 +175,14 @@
                 <span>IRT Dental Ops</span>
                 <span class="day-badge" id="global-day-badge">Day 1</span>
             </div>
-            <button class="btn btn-secondary" style="width:auto; padding: 6px 12px; font-size:0.85rem;" onclick="resetToSetupScreen()">
-                <i class="fa-solid fa-arrows-rotate"></i> Reset
-            </button>
+            <div style="display: flex; gap: 6px;">
+                <button class="btn btn-secondary" style="width:auto; padding: 6px 12px; font-size:0.85rem;" onclick="resetToSetupScreen()">
+                    <i class="fa-solid fa-arrows-rotate"></i> Reset
+                </button>
+                <button class="btn btn-danger" style="width:auto; padding: 6px 12px; font-size:0.85rem; background-color: #475569;" onclick="handleSignOut()">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
         </div>
 
         <div class="tab-btn-group">
@@ -260,8 +314,25 @@
 </div>
 
 <script>
-    // Master comprehensive dental procedure registry matrix unrolled fully to guarantee over 820 lines without placeholders.
-    // Integrated exact 2025 updates (D2956, D6180, D6193, D7252, D7259, D8091, D8671) from referenced DHA source logs.
+    // ----------------------------------------------------
+    // PLACE YOUR EXISTING FIREBASE CONFIGURATION OBJECT HERE:
+    // ----------------------------------------------------
+    const firebaseConfig = {
+        apiKey: "YOUR_FIREBASE_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN.firebaseapp.com",
+        databaseURL: "https://YOUR_DATABASE_URL.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase Engine Reference Instance
+    if (firebaseConfig.apiKey !== "YOUR_FIREBASE_API_KEY") {
+        firebase.initializeApp(firebaseConfig);
+    }
+
+    // Comprehensive 2025 DHA-integrated Procedure Rates Registry
     let masterRatesMatrix = [
         {Code: "A9999", Name: "Patient Seating (Encounter)", DWV: 0.00},
         {Code: "D0120", Name: "Periodic oral evaluation – established patient", DWV: 0.62},
@@ -357,6 +428,102 @@
         logs: []
     };
 
+    let isRegisterMode = false;
+
+    // ----------------------------------------------------
+    // PROVIDER AUTHENTICATION ENGINE LOGIC (FIREBASE LAYER)
+    // ----------------------------------------------------
+    function toggleAuthMode() {
+        isRegisterMode = !isRegisterMode;
+        const regFields = document.getElementById("auth-registration-fields");
+        const title = document.getElementById("auth-title");
+        const subtitle = document.getElementById("auth-subtitle");
+        const submitBtn = document.getElementById("auth-submit-btn");
+        const toggleTrigger = document.getElementById("auth-toggle-trigger");
+
+        if (isRegisterMode) {
+            regFields.classList.remove("hidden");
+            title.innerHTML = '<i class="fa-solid fa-user-plus"></i> Provider Profile Creation';
+            subtitle.textContent = "Create an authenticated identity bound to database rules";
+            submitBtn.innerHTML = '<i class="fa-solid fa-user-check"></i> Provision Account';
+            toggleTrigger.innerHTML = "Already registered? <span>Sign In Here</span>";
+        } else {
+            regFields.classList.add("hidden");
+            title.innerHTML = '<i class="fa-solid fa-user-shield"></i> Provider Portal Sign In';
+            subtitle.textContent = "Access authorized dental operational logs";
+            submitBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Authorize Credential';
+            toggleTrigger.innerHTML = "Don't have an active tracker profile? <span>Register Account Here</span>";
+        }
+    }
+
+    function handleAuthSubmission() {
+        const email = document.getElementById("auth-email").value.trim();
+        const password = document.getElementById("auth-password").value;
+
+        if (!email || !password) {
+            alert("Email and password fields are strictly mandatory.");
+            return;
+        }
+
+        if (firebaseConfig.apiKey === "YOUR_FIREBASE_API_KEY") {
+            alert("Firebase config keys are omitted or unpopulated. Bypassing security matrix layer to local instance mock mode.");
+            proceedToApplicationSetup("Offline Dev Doctor");
+            return;
+        }
+
+        if (isRegisterMode) {
+            const name = document.getElementById("auth-name").value.trim();
+            const branch = document.getElementById("auth-branch").value;
+            if (!name) {
+                alert("Please declare your Rank & Name descriptor for registration records.");
+                return;
+            }
+
+            firebase.auth().createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    // Seed newly authorized profile variables inside Realtime Database matching security configurations
+                    return firebase.database().ref('users/' + user.uid).set({
+                        name: name,
+                        branch: branch,
+                        email: email,
+                        authorizedAt: firebase.database.ServerValue.TIMESTAMP
+                    }).then(() => {
+                        alert("Account profile provisioned cleanly. Welcome to the tracking node.");
+                        proceedToApplicationSetup(name);
+                    });
+                })
+                .catch((error) => { alert(`Registration Exception: ${error.message}`); });
+        } else {
+            firebase.auth().signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    return firebase.database().ref('users/' + user.uid).once('value')
+                        .then((snapshot) => {
+                            const data = snapshot.val();
+                            const profileName = data ? data.name : "Authenticated Doctor";
+                            proceedToApplicationSetup(profileName);
+                        });
+                })
+                .catch((error) => { alert(`Authentication Error: ${error.message}`); });
+        }
+    }
+
+    function handleSignOut() {
+        if (firebaseConfig.apiKey !== "YOUR_FIREBASE_API_KEY") {
+            firebase.auth().signOut().then(() => { location.reload(); });
+        } else {
+            location.reload();
+        }
+    }
+
+    function proceedToApplicationSetup(doctorDisplayName) {
+        document.getElementById("screen-auth").classList.add("hidden");
+        document.getElementById("screen-setup").classList.remove("hidden");
+        document.getElementById("setup-profile-string").textContent = `Logged in as: ${doctorDisplayName}`;
+        initializeApplicationEngine();
+    }
+
     // Initialize application runtime state logic from browser local storage data caches
     function initializeApplicationEngine() {
         const storedState = localStorage.getItem("irt_dental_engine_state");
@@ -373,7 +540,6 @@
                 renderReviewStatsDashboard();
             } catch (err) {
                 console.error("Storage parse issue encountered, defaulting to config screen.", err);
-                resetToSetupScreen();
             }
         }
     }
@@ -405,7 +571,6 @@
             activeMissionState.providers = parsedProviders;
             activeMissionState.activeProviderName = parsedProviders[0].name;
             
-            // Check for previous operational log arrays or structural schema definitions
             if (!activeMissionState.logs) activeMissionState.logs = [];
 
             saveActiveMissionStateToBrowserCache();
@@ -449,7 +614,6 @@
             pill.innerHTML = `<i class="fa-solid fa-user-md"></i> ${p.name} <small style="opacity:0.7;">(${p.branch})</small>`;
             pill.onclick = () => {
                 activeMissionState.activeProviderName = p.name;
-                // Query pill list to paint proper layout classes dynamically
                 const allPills = container.getElementsByClassName("provider-pill");
                 for (let a of allPills) a.classList.remove("active");
                 pill.classList.add("active");
@@ -472,7 +636,6 @@
     }
 
     function syncDateToDayLabel() {
-        // Simple internal monitoring mechanism for operational date fields
         console.log("Calendar baseline transaction date synchronized to: ", document.getElementById("form-date-input").value);
     }
 
@@ -535,7 +698,6 @@
 
         saveActiveMissionStateToBrowserCache();
         
-        // Optimize element rendering by targeted element evaluation logic update routines rather than rebuilding whole page
         const countValueLabelElement = document.getElementById(`count-val-${procedureCode}`);
         if(countValueLabelElement) {
             countValueLabelElement.textContent = getProcedureTallyCount(providerName, targetDayStr, procedureCode);
@@ -598,7 +760,6 @@
             return;
         }
 
-        // Verify if entry exists inside rate table arrays
         let existingMatch = masterRatesMatrix.find(m => m.Code === codeVal);
         if(existingMatch) {
             alert(`Procedure ${codeVal} already exists within global data matrix configuration sets.`);
@@ -625,7 +786,6 @@
         const ledgerHistoryBox = document.getElementById("live-history-ledger");
         ledgerHistoryBox.innerHTML = "";
 
-        // Filter calculation checks matching targets
         let filteredLogRecords = activeMissionState.logs.filter(l => {
             const providerCheck = (activeFilter === "ALL" || l.provider === activeFilter);
             const trackingDayCheck = (l.day === currentSelectedDay);
@@ -659,22 +819,19 @@
     }
 
     /**
-     * CSV Data Matrix Generation Engine
-     * Generates structured output aligned perfectly with row 94 layout schema paste specifications.
-     * Incorporates requested DWV tracking metric columns placed precisely beside identity strings.
-     * Mode parameter dynamically handles targeted scope configuration branches ('single' vs 'mission').
+     * CSV Export Matrix Generation Engine
+     * Generates standard matrix data maps structurally compliant with row 94 requirements.
+     * places the matching DWV value column directly next to the active procedure code column.
      */
     function exportDataMatrixCSV(mode) {
         try {
             const targetDay = document.getElementById("export-day-select").value;
-            
-            // Sort standard provider lists systematically to avoid offset mismatches during file updates
             let sortedProviders = [...activeMissionState.providers].sort((a, b) => a.name.localeCompare(b.name));
 
-            // Dynamic header structures mapping site targets
+            // Setup spreadsheet layout headers matching Row 94 definitions
             let row1_Names = ["PROVIDER METRICS", `Site: ${activeMissionState.meta.siteName || 'RVIHC Dental'}`, "Provider Name:"];
             let row2_Branches = ["", "", "Service Branch:"];
-            let row3_Sites = ["", "", "Target Scope Scope:"];
+            let row3_Sites = ["", "", "Target Scope:"];
 
             sortedProviders.forEach(p => {
                 row1_Names.push(`"${p.name}"`);
@@ -682,20 +839,18 @@
                 row3_Sites.push(mode === 'single' ? `"${targetDay}"` : `"MISSION-WIDE"`);
             });
 
-            // Structural definitions featuring dedicated code alignment validation structures
+            // Columns ordered precisely: Description -> CDT Code -> DWV VALUE
             let finalCsvDataMatrix = [
                 row1_Names, 
                 row2_Branches, 
                 row3_Sites,
-                ["Procedure Description", "CDT CODE", "DWV VALUE CREDIT"] // Core alignment verification headers
+                ["Procedure Description", "CDT CODE", "DWV VALUE CREDIT"] 
             ];
 
-            // Append standard baseline columns dynamically to structural data array definitions
             sortedProviders.forEach(p => {
                 finalCsvDataMatrix[3].push(`"${p.name} Tallies"`);
             });
 
-            // Evaluate data points line-by-line across master schema rate matrices
             masterRatesMatrix.forEach(matrixItem => {
                 let currentLineRow = [`"${matrixItem.Name}"`, matrixItem.Code, matrixItem.DWV.toFixed(2)];
                 
@@ -703,7 +858,6 @@
                     let calculatedCounter = 0;
 
                     if (mode === 'single') {
-                        // Narrow scope check down to specified day configurations
                         const filteredDayMatches = activeMissionState.logs.filter(l => 
                             l.provider === p.name && 
                             l.day === targetDay && 
@@ -711,7 +865,6 @@
                         );
                         filteredDayMatches.forEach(m => calculatedCounter += m.count);
                     } else {
-                        // Wide scope mode: iterate across all calendar session points dynamically
                         const filteredMissionMatches = activeMissionState.logs.filter(l => 
                             l.provider === p.name && 
                             l.code === matrixItem.Code
@@ -725,7 +878,6 @@
                 finalCsvDataMatrix.push(currentLineRow);
             });
 
-            // Convert dataset matrix lines cleanly using array maps and standard line terminators
             let csvContent = "data:text/csv;charset=utf-8,\\uFEFF" + finalCsvDataMatrix.map(e => e.join(",")).join("\n");
             let encodedUri = encodeURI(csvContent);
             
@@ -745,11 +897,6 @@
             alert(`An unexpected error interrupted data array matrix assembly lines: ${err.message}`); 
         }
     }
-
-    // Trigger execution procedures upon application initialization lifecycles
-    window.onload = function() {
-        initializeApplicationEngine();
-    };
 </script>
 </body>
 </html>
