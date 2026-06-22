@@ -56,7 +56,7 @@
 
         .hidden { display: none !important; }
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .metrics-section-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600); margin: 12px 0 6px 0; font-weight: 700; }
+        .metrics-section-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--primary); margin: 16px 0 8px 0; font-weight: 700; border-bottom: 1px solid var(--gray-200); padding-bottom: 4px; }
         .totals-box { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
         .stat-card { background: var(--gray-100); padding: 10px; border-radius: 8px; text-align: center; }
         .stat-num { font-size: 1.15rem; font-weight: 700; color: var(--primary); }
@@ -65,12 +65,17 @@
         .history-item { background: white; padding: 12px; border-radius: 8px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border-left: 4px solid var(--primary-light); cursor: pointer; transition: 0.15s; }
         .history-item:hover { background: #f1f5f9; transform: translateX(2px); }
         .edit-banner { background: #fef3c7; border: 1px solid #f59e0b; color: #b45309; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;}
+
+        .site-block-summary { background: #f8fafc; border: 1px solid var(--gray-200); padding: 12px; border-radius: 8px; margin-bottom: 10px; }
+        .site-block-title { font-weight: 700; size: 0.95rem; margin-bottom: 6px; color: var(--dark); }
+        .site-grid-sub { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
     </style>
 </head>
 <body>
 
 <div class="container">
 
+    <!-- AUTHENTICATION SCREEN -->
     <div id="auth-screen" class="card">
         <h2 id="auth-title"><i class="fa-solid fa-user-shield"></i> Provider Login</h2>
         <form id="auth-form">
@@ -85,18 +90,12 @@
             
             <div id="registration-fields" class="hidden">
                 <div class="form-group">
-                    <label>Full Name / Rank Name (e.g. LCDR Willes)</label>
-                    <input type="text" id="reg-name" placeholder="LCDR Willes">
+                    <label>Full Name / Rank Name (e.g. CAPT Horning)</label>
+                    <input type="text" id="reg-name" placeholder="CAPT Horning">
                 </div>
                 <div class="form-group">
-                    <label>Service Branch</label>
-                    <select id="reg-branch">
-                        <option value="USNR">USNR (Navy Reserve)</option>
-                        <option value="AFRC">AFRC (Air Force Reserve)</option>
-                        <option value="USPHS">USPHS (Public Health Service)</option>
-                        <option value="USARC">USARC (Army Reserve)</option>
-                        <option value="ANG">ANG (Air National Guard)</option>
-                    </select>
+                    <label>Service Branch Code (e.g. USNR)</label>
+                    <input type="text" id="reg-branch" placeholder="USNR" style="text-transform: uppercase;">
                 </div>
                 <div class="form-group">
                     <label>Assigned Duty Site Location</label>
@@ -114,6 +113,7 @@
         </div>
     </div>
 
+    <!-- MAIN APP WRAPPER -->
     <div id="app-screen" class="hidden">
         <div class="header-bar">
             <div>
@@ -125,10 +125,11 @@
 
         <div class="nav-tabs">
             <button class="nav-tab active" id="tab-entry" onclick="switchView('entry')"><i class="fa-solid fa-pen-to-square"></i> Intake</button>
-            <button class="nav-tab" id="tab-dashboard" onclick="switchView('dashboard')"><i class="fa-solid fa-user-chart"></i> Personal</button>
-            <button class="nav-tab" id="tab-mission" onclick="switchView('mission')"><i class="fa-solid fa-globe"></i> Mission</button>
+            <button class="nav-tab" id="tab-dashboard" onclick="switchView('dashboard')"><i class="fa-solid fa-user-md"></i> Personal</button>
+            <button class="nav-tab" id="tab-mission" onclick="switchView('mission')"><i class="fa-solid fa-chart-line"></i> Mission</button>
         </div>
 
+        <!-- VIEW 1: INTAKE FORM -->
         <div id="view-entry">
             <div class="card">
                 <h2><i class="fa-solid fa-hospital-user"></i> Patient Encounter</h2>
@@ -166,12 +167,14 @@
 
                 <label style="font-size: 0.9rem; color: var(--primary); font-weight: 700; margin-bottom: 6px; display: block;">Procedure Counters Scroll Matrix</label>
                 <div class="counter-grid" id="matrix-scroll-container">
-                    </div>
+                    <!-- Standard + Custom Counter Rows loaded dynamically -->
+                </div>
 
                 <button class="btn btn-success" id="btn-submit-encounter"><i class="fa-solid fa-cloud-arrow-up"></i> Save Patient Data</button>
             </div>
         </div>
 
+        <!-- VIEW 2: PERSONAL DASHBOARD TOTALS -->
         <div id="view-dashboard" class="hidden">
             <div class="card">
                 <h2><i class="fa-solid fa-chart-bar"></i> Personal Metrics Tracker</h2>
@@ -192,29 +195,33 @@
 
                 <h3 style="margin: 18px 0 6px 0; font-size: 1rem; color: var(--primary);"><i class="fa-solid fa-clock-rotate-left"></i> History Log <span style="font-size:0.75rem; color:var(--gray-600); font-weight:normal;">(Tap row to Edit)</span></h3>
                 <div id="dashboard-history-logs" style="max-height: 200px; overflow-y: auto;">
-                    </div>
+                    <!-- Patient logs rendered here -->
+                </div>
             </div>
         </div>
 
+        <!-- VIEW 3: MISSION OVERVIEW TAB -->
         <div id="view-mission" class="hidden">
             <div class="card">
-                <h2><i class="fa-solid fa-layer-group"></i> Consolidated Mission View</h2>
+                <h2><i class="fa-solid fa-users-gear"></i> Consolidated Mission Panel</h2>
                 <div class="form-group" style="margin-top: 10px;">
                     <label>View Operations Target Date</label>
                     <input type="date" id="mission-target-date">
                 </div>
 
-                <div class="metrics-section-title" id="lbl-mission-day-title">Target Day Summaries</div>
-                <div class="totals-box" id="grid-mission-day-stats">
-                    </div>
+                <div class="metrics-section-title" id="lbl-mission-day-title">Target Day Breakdown</div>
+                <div id="container-mission-day-breakdown">
+                    <!-- Dynamic rendering of Site data blocks (Patients, Procs, DWV) -->
+                </div>
 
-                <div class="metrics-section-title">Global Cumulative Mission Totals</div>
-                <div class="totals-box" id="grid-mission-global-stats">
-                    </div>
+                <div class="metrics-section-title">Global Cumulative Mission Breakdown</div>
+                <div id="container-mission-global-breakdown">
+                    <!-- Dynamic rendering of Site totals cumulative blocks -->
+                </div>
 
                 <div style="margin-top: 20px; border-top: 1px solid var(--gray-200); padding-top: 16px;">
-                    <label style="font-weight: 700; color: var(--primary);"><i class="fa-solid fa-file-csv"></i> Day Sheet Export Panel</label>
-                    <p style="font-size: 0.75rem; color: var(--gray-600); margin-bottom: 12px;"> Generates an Excel-ready data paste matrix structured horizontally by Site (1, 2, 3) and alphabetical last names matching Row 92 & 93 patterns.</p>
+                    <label style="font-weight: 700; color: var(--primary);"><i class="fa-solid fa-file-csv"></i> Excel Day Sheet Export Pipeline</label>
+                    <p style="font-size: 0.75rem; color: var(--gray-600); margin-bottom: 12px;">Generates a spreadsheet paste matrix ordered horizontally by Site numbers, then sorted alphabetically by provider names. Rows map precisely to match the standard dental template alignment layout.</p>
                     <button class="btn btn-primary" id="btn-export-day-matrix"><i class="fa-solid fa-download"></i> Download Matrix Export</button>
                 </div>
             </div>
@@ -247,72 +254,91 @@
     let currentEditingDocId = null; 
     let currentEncounterData = {}; 
 
+    // Explicit 73-Row Ordered Master Matrix
     const masterRatesMatrix = [
-        {Code: "A9999", Name: "Patient Seating (Encounter)", DWV: 0.00},
-        {Code: "D0120", Name: "Periodic oral evaluation – established", DWV: 0.62},
+        {Code: "W9999", Name: "Patient Seating (Encounter)", DWV: 0.00},
+        {Code: "D0120", Name: "Periodic oral evaluation – established patient", DWV: 0.62},
         {Code: "D0140", Name: "Limited oral evaluation – problem focused", DWV: 0.93},
-        {Code: "D0145", Name: "Oral evaluation – patient under three", DWV: 0.91},
-        {Code: "D0150", Name: "Comprehensive oral evaluation", DWV: 1.05},
-        {Code: "D0160", Name: "Detailed oral evaluation – problem focused", DWV: 1.58},
-        {Code: "D0171", Name: "Re-evaluation – post-operative visit", DWV: 0.75},
+        {Code: "D0145", Name: "Oral evaluation for a patient under three years of age and counseling with primary caregiver", DWV: 0.91},
+        {Code: "D0150", Name: "Comprehensive oral evaluation – new or established patient", DWV: 1.05},
+        {Code: "D0160", Name: "Detailed and extensive oral evaluation – problem focused, by report", DWV: 1.58},
+        {Code: "D0171", Name: "Re‐evaluation – post-operative office visit", DWV: 0.75},
         {Code: "D0190", Name: "Screening of a patient", DWV: 0.50},
-        {Code: "D0210", Name: "Intraoral – comprehensive series", DWV: 1.64},
-        {Code: "D0220", Name: "Intraoral – periapical first image", DWV: 0.36},
-        {Code: "D0230", Name: "Intraoral – periapical each add image", DWV: 0.30},
-        {Code: "D0240", Name: "Intraoral – occlusal image", DWV: 0.44},
-        {Code: "D0270", Name: "Bitewing – single image", DWV: 0.37},
-        {Code: "D0272", Name: "Bitewings – two images", DWV: 0.55},
-        {Code: "D0273", Name: "Bitewings – three images", DWV: 0.63},
-        {Code: "D0274", Name: "Bitewings – four images", DWV: 0.77},
-        {Code: "D0330", Name: "Panoramic image", DWV: 1.15},
+        {Code: "D0210", Name: "Intraoral - comprehensive series of radiographic images", DWV: 1.64},
+        {Code: "D0220", Name: "Intraoral – periapical first radiographic image", DWV: 0.36},
+        {Code: "D0230", Name: "Intraoral – periapical each additional radiographic image", DWV: 0.30},
+        {Code: "D0240", Name: "Intraoral – occlusal radiographic image", DWV: 0.44},
+        {Code: "D0270", Name: "Bitewing – single radiographic image", DWV: 0.37},
+        {Code: "D0272", Name: "Bitewings – two radiographic images", DWV: 0.55},
+        {Code: "D0273", Name: "Bitewings – three radiographic images", DWV: 0.63},
+        {Code: "D0274", Name: "Bitewings – four radiographic images", DWV: 0.77},
+        {Code: "D0330", Name: "Panoramic radiographic image", DWV: 1.15},
+        {Code: "D0999", Name: "Unspecified diagnostic procedure, by report", DWV: 0.00},
         {Code: "D1110", Name: "Prophylaxis – adult", DWV: 1.83},
         {Code: "D1120", Name: "Prophylaxis – child", DWV: 1.34},
         {Code: "D1206", Name: "Topical application of fluoride varnish", DWV: 0.63},
-        {Code: "D1208", Name: "Topical application of fluoride – excl varnish", DWV: 0.63},
-        {Code: "D1351", Name: "Sealant – per tooth (D2940 used alternative)", DWV: 1.02},
-        {Code: "D1353", Name: "Sealant repair – per tooth", DWV: 0.60},
-        {Code: "D2140", Name: "Amalgam – one surface primary/permanent", DWV: 0.81},
-        {Code: "D2150", Name: "Amalgam – two surfaces primary/permanent", DWV: 1.05},
-        {Code: "D2160", Name: "Amalgam – three surfaces primary/permanent", DWV: 1.25},
-        {Code: "D2161", Name: "Amalgam – four/more surfaces permanent", DWV: 1.54},
-        {Code: "D2330", Name: "Resin-based composite – one surface anterior", DWV: 0.98},
-        {Code: "D2331", Name: "Resin-based composite – two surfaces anterior", DWV: 1.23},
-        {Code: "D2332", Name: "Resin-based composite – three surfaces anterior", DWV: 1.48},
-        {Code: "D2335", Name: "Resin composite – 4+ surfaces/incisal anterior", DWV: 1.83},
-        {Code: "D2391", Name: "Resin-based composite – one surface posterior", DWV: 0.99},
-        {Code: "D2392", Name: "Resin-based composite – two surfaces posterior", DWV: 1.28},
-        {Code: "D2393", Name: "Resin-based composite – three surfaces posterior", DWV: 1.53},
-        {Code: "D2394", Name: "Resin composite – 4+ surfaces posterior", DWV: 1.94},
-        {Code: "D2930", Name: "Prefabricated stainless steel crown – primary", DWV: 1.55},
-        {Code: "D2931", Name: "Prefabricated stainless steel crown – permanent", DWV: 1.70},
+        {Code: "D1310", Name: "Nutritional counseling for control of dental disease", DWV: 0.00},
+        {Code: "D1320", Name: "Tobacco counseling for the control and prevention of oral disease", DWV: 0.00},
+        {Code: "D1321", Name: "Counseling for control/prevention of adverse health effects", DWV: 0.00},
+        {Code: "D1330", Name: "Oral hygiene instructions", DWV: 0.00},
+        {Code: "D1351", Name: "Sealant – per tooth", DWV: 1.02},
+        {Code: "D1352", Name: "Preventive resin restoration in a moderate to high caries risk patient", DWV: 1.02},
+        {Code: "D1354", Name: "Application of caries arresting medicament - per tooth", DWV: 0.63},
+        {Code: "D2140", Name: "Amalgam – one surface, primary or permanent", DWV: 0.81},
+        {Code: "D2150", Name: "Amalgam – two surfaces, primary or permanent", DWV: 1.05},
+        {Code: "D2160", Name: "Amalgam – three surfaces, primary or permanent", DWV: 1.25},
+        {Code: "D2161", Name: "Amalgam – four or more surfaces, primary or permanent", DWV: 1.54},
+        {Code: "D2330", Name: "Resin-based composite – one surface, anterior", DWV: 0.98},
+        {Code: "D2331", Name: "Resin-based composite – two surfaces, anterior", DWV: 1.23},
+        {Code: "D2332", Name: "Resin-based composite – three surfaces, anterior", DWV: 1.48},
+        {Code: "D2335", Name: "Resin-based composite – 4+ surfaces or involving incisal angle", DWV: 1.83},
+        {Code: "D2391", Name: "Resin-based composite – one surface, posterior", DWV: 0.99},
+        {Code: "D2392", Name: "Resin-based composite – two surfaces, posterior", DWV: 1.28},
+        {Code: "D2393", Name: "Resin-based composite – three surfaces, posterior", DWV: 1.53},
+        {Code: "D2394", Name: "Resin-based composite – four or more surfaces, posterior", DWV: 1.94},
+        {Code: "D2920", Name: "Re-cement or re‐bond crown", DWV: 0.00},
+        {Code: "D2930", Name: "Prefabricated stainless steel crown – primary tooth", DWV: 1.55},
+        {Code: "D2931", Name: "Prefabricated stainless steel crown – permanent tooth", DWV: 1.70},
+        {Code: "D2932", Name: "Prefabricated resin crown", DWV: 1.55},
         {Code: "D2940", Name: "Protective restoration", DWV: 1.02},
-        {Code: "D3220", Name: "Therapeutic pulpotomy – removal of pulp", DWV: 1.34},
-        {Code: "D3221", Name: "Pulpal debridement – primary/permanent", DWV: 1.45},
-        {Code: "D3310", Name: "Endodontic therapy – anterior tooth", DWV: 5.75},
-        {Code: "D3320", Name: "Endodontic therapy – bicuspid tooth", DWV: 6.74},
-        {Code: "D3330", Name: "Endodontic therapy – molar tooth", DWV: 8.35},
-        {Code: "D4341", Name: "Periodontal scaling/root planing – 4+ teeth", DWV: 1.96},
-        {Code: "D4342", Name: "Periodontal scaling/root planing – 1-3 teeth", DWV: 1.35},
-        {Code: "D4346", Name: "Scaling in presence of generalized gingivitis", DWV: 1.83},
-        {Code: "D4355", Name: "Full mouth debridement – evaluation fallback", DWV: 1.56},
-        {Code: "D4910", Name: "Periodontal maintenance", DWV: 1.84},
-        {Code: "D5110", Name: "Complete denture – maxillary", DWV: 9.39},
-        {Code: "D5120", Name: "Complete denture – mandibular", DWV: 9.39},
-        {Code: "D5211", Name: "Maxillary partial denture – resin base", DWV: 8.28},
-        {Code: "D5212", Name: "Mandibular partial denture – resin base", DWV: 8.28},
-        {Code: "D7111", Name: "Extraction – coronal remnants primary tooth", DWV: 0.64},
-        {Code: "D7140", Name: "Extraction – erupted tooth or exposed root", DWV: 0.95},
-        {Code: "D7210", Name: "Extraction – surgical/coronal removal", DWV: 1.93},
+        {Code: "D2941", Name: "Interim therapeutic restoration – primary dentition", DWV: 1.02},
+        {Code: "D2950", Name: "Core buildup, including any pins when required", DWV: 1.50},
+        {Code: "D3110", Name: "Pulp cap – direct (excluding final restoration)", DWV: 0.00},
+        {Code: "D3120", Name: "Pulp cap – indirect (excluding final restoration)", DWV: 0.00},
+        {Code: "D3220", Name: "Therapeutic pulpotomy (excluding final restoration)", DWV: 1.34},
+        {Code: "D3310", Name: "Endodontic therapy, anterior tooth (excluding final restoration)", DWV: 5.75},
+        {Code: "D4341", Name: "Periodontal scaling and root planing – 4+ teeth per quadrant", DWV: 1.96},
+        {Code: "D4342", Name: "Periodontal scaling and root planing – 1-3 teeth per quadrant", DWV: 1.35},
+        {Code: "D4355", Name: "Full mouth debridement to enable comprehensive evaluation", DWV: 1.56},
+        {Code: "D4920", Name: "Unscheduled dressing change", DWV: 0.00},
+        {Code: "D5410", Name: "Adjust complete denture – maxillary", DWV: 0.00},
+        {Code: "D5411", Name: "Adjust complete denture – mandibular", DWV: 0.00},
+        {Code: "D5421", Name: "Adjust partial denture – maxillary", DWV: 0.00},
+        {Code: "D5422", Name: "Adjust partial denture – mandibular", DWV: 0.00},
+        {Code: "D7111", Name: "Extraction, coronal remnants – primary tooth", DWV: 0.64},
+        {Code: "D7140", Name: "Extraction, erupted tooth or exposed root", DWV: 0.95},
+        {Code: "D7210", Name: "Extraction, erupted tooth requiring removal of bone", DWV: 1.93},
         {Code: "D7220", Name: "Removal of impacted tooth – soft tissue", DWV: 2.72},
         {Code: "D7230", Name: "Removal of impacted tooth – partially bony", DWV: 3.57},
         {Code: "D7240", Name: "Removal of impacted tooth – completely bony", DWV: 4.41},
-        {Code: "D7250", Name: "Removal of residual tooth roots", DWV: 3.62},
-        {Code: "D7310", Name: "Alveoloplasty w/ extractions – 4+ teeth", DWV: 3.57},
-        {Code: "D7311", Name: "Alveoloplasty w/ extractions – 1-3 teeth", DWV: 3.00},
-        {Code: "D7510", Name: "Incision and drainage of abscess – intraoral", DWV: 2.56},
-        {Code: "D9110", Name: "Palliative treatment of dental pain – visit", DWV: 1.38},
+        {Code: "D7250", Name: "Removal of residual tooth roots (cutting procedure)", DWV: 3.62},
+        {Code: "D7310", Name: "Alveoloplasty in conjunction with extractions – 4+ teeth", DWV: 3.57},
+        {Code: "D7311", Name: "Alveoloplasty in conjunction with extractions – 1-3 teeth", DWV: 3.00},
+        {Code: "D7510", Name: "Incision and drainage of abscess – intraoral soft tissue", DWV: 2.56},
+        {Code: "D7511", Name: "Incision and drainage of abscess – intraoral – complicated", DWV: 2.56},
+        {Code: "D7520", Name: "Incision and drainage of abscess – extraoral soft tissue", DWV: 2.56},
+        {Code: "D7910", Name: "Suture of recent small wounds up to 5 cm", DWV: 0.00},
+        {Code: "D7911", Name: "Complicated suture – up to 5 cm", DWV: 0.00},
+        {Code: "D8695", Name: "Removal of fixed orthodontic appliances", DWV: 0.00},
+        {Code: "D9110", Name: "Palliative treatment of dental pain - per visit", DWV: 1.38},
         {Code: "D9211", Name: "Regional block anesthesia", DWV: 0.62},
-        {Code: "D9215", Name: "Local anesthesia with procedure", DWV: 0.39}
+        {Code: "D9215", Name: "Local anesthesia in conjunction with operative or surgical", DWV: 0.39},
+        {Code: "D9310", Name: "Consultation – diagnostic service provided by dentist", DWV: 1.15},
+        {Code: "D9630", Name: "Drugs or medicaments dispensed in the office for home use", DWV: 0.00},
+        {Code: "D9910", Name: "Application of desensitizing medicament", DWV: 0.00},
+        {Code: "D9930", Name: "Treatment of complications (post–surgical)", DWV: 0.00},
+        {Code: "D9951", Name: "Occlusal adjustment – limited", DWV: 0.00},
+        {Code: "D9999", Name: "Unspecified adjunctive procedure, by report", DWV: 0.00}
     ];
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -374,7 +400,7 @@
         });
 
         const customOverrideBox = document.getElementById('custom-override-fields');
-        if (val && !exactMatchFound && !val.startsWith("D") && val.length > 2) {
+        if (val && !exactMatchFound && val.length > 2) {
             customOverrideBox.classList.remove('hidden');
         } else {
             customOverrideBox.classList.add('hidden');
@@ -397,7 +423,7 @@
             try {
                 if (isRegisterMode) {
                     const name = document.getElementById('reg-name').value || "Doctor";
-                    const branch = document.getElementById('reg-branch').value;
+                    const branch = document.getElementById('reg-branch').value.toUpperCase() || "USNR";
                     const site = document.getElementById('reg-site').value;
                     const cred = await createUserWithEmailAndPassword(auth, email, password);
                     await setDoc(doc(db, "users", cred.user.uid), { uid: cred.user.uid, name, branch, site, role: 'doctor' });
@@ -635,45 +661,79 @@
     };
 
     /* =========================================================================
-       COMPREHENSIVE MISSION ANALYTICS PANEL & SPREADSHEET PASTE CODE EXTRACTION
+       MISSION BREAKDOWN LOGIC AND HORIZONTAL SPREADSHEET STRUCTURAL INTERACTION
        ========================================================================= */
     async function runGlobalMissionTabPipeline() {
         const selectedDay = document.getElementById('mission-target-date').value;
-        document.getElementById('lbl-mission-day-title').innerText = `Site Totals: ${selectedDay}`;
+        document.getElementById('lbl-mission-day-title').innerText = `Target Day Breakdown: ${selectedDay}`;
 
         const snapshot = await getDocs(collection(db, "encounters"));
         
-        let targetDayStats = {"Site 1": 0, "Site 2": 0, "Site 3": 0};
-        let globalCumulativeStats = {"Site 1": 0, "Site 2": 0, "Site 3": 0};
+        let dayStats = {
+            "Site 1": { pts: 0, procs: 0, dwv: 0 },
+            "Site 2": { pts: 0, procs: 0, dwv: 0 },
+            "Site 3": { pts: 0, procs: 0, dwv: 0 }
+        };
+        let globalStats = {
+            "Site 1": { pts: 0, procs: 0, dwv: 0 },
+            "Site 2": { pts: 0, procs: 0, dwv: 0 },
+            "Site 3": { pts: 0, procs: 0, dwv: 0 }
+        };
 
         snapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            const siteKey = data.site || "Site 1";
-            
-            let procedureSum = 0;
-            data.procedures.forEach(p => procedureSum += p.qty);
+            const enc = docSnap.data();
+            const siteKey = enc.site || "Site 1";
+            if(!globalStats[siteKey]) return;
 
-            if(globalCumulativeStats[siteKey] !== undefined) {
-                globalCumulativeStats[siteKey] += procedureSum;
-            }
-            if(data.date === selectedDay && targetDayStats[siteKey] !== undefined) {
-                targetDayStats[siteKey] += procedureSum;
+            let encProcs = 0;
+            let encDwv = 0;
+            enc.procedures.forEach(p => {
+                encProcs += p.qty;
+                encDwv += (p.qty * p.dwv);
+            });
+
+            // Cumulative global aggregation
+            globalStats[siteKey].pts++;
+            globalStats[siteKey].procs += encProcs;
+            globalStats[siteKey].dwv += encDwv;
+
+            // Target selected daily aggregation
+            if (enc.date === selectedDay) {
+                dayStats[siteKey].pts++;
+                dayStats[siteKey].procs += encProcs;
+                dayStats[siteKey].dwv += encDwv;
             }
         });
 
-        // Display current day site metrics UI
+        // Populate Day Breakdown UI
         let dayHtml = "";
-        Object.keys(targetDayStats).forEach(site => {
-            dayHtml += `<div class="stat-card"><div class="stat-num">${targetDayStats[site]}</div><div class="stat-lbl">${site} Procs</div></div>`;
+        Object.keys(dayStats).forEach(site => {
+            dayHtml += `
+                <div class="site-block-summary">
+                    <div class="site-block-title">${site}</div>
+                    <div class="site-grid-sub">
+                        <div class="stat-card"><div class="stat-num">${dayStats[site].pts}</div><div class="stat-lbl">Patients</div></div>
+                        <div class="stat-card"><div class="stat-num">${dayStats[site].procs}</div><div class="stat-lbl">Procedures</div></div>
+                        <div class="stat-card"><div class="stat-num">${dayStats[site].dwv.toFixed(2)}</div><div class="stat-lbl">DWV</div></div>
+                    </div>
+                </div>`;
         });
-        document.getElementById('grid-mission-day-stats').innerHTML = dayHtml;
+        document.getElementById('container-mission-day-breakdown').innerHTML = dayHtml;
 
-        // Display absolute mission tracking totals UI
+        // Populate Cumulative Breakdown UI
         let globalHtml = "";
-        Object.keys(globalCumulativeStats).forEach(site => {
-            globalHtml += `<div class="stat-card"><div class="stat-num">${globalCumulativeStats[site]}</div><div class="stat-lbl">${site} Cumulative</div></div>`;
+        Object.keys(globalStats).forEach(site => {
+            globalHtml += `
+                <div class="site-block-summary">
+                    <div class="site-block-title">${site}</div>
+                    <div class="site-grid-sub">
+                        <div class="stat-card"><div class="stat-num">${globalStats[site].pts}</div><div class="stat-lbl">Patients</div></div>
+                        <div class="stat-card"><div class="stat-num">${globalStats[site].procs}</div><div class="stat-lbl">Procedures</div></div>
+                        <div class="stat-card"><div class="stat-num">${globalStats[site].dwv.toFixed(2)}</div><div class="stat-lbl">Total DWV</div></div>
+                    </div>
+                </div>`;
         });
-        document.getElementById('grid-mission-global-stats').innerHTML = globalHtml;
+        document.getElementById('container-mission-global-breakdown').innerHTML = globalHtml;
     }
 
     async function downloadStructuredExcelPasteCsv() {
@@ -682,8 +742,6 @@
 
         try {
             const snapshot = await getDocs(collection(db, "encounters"));
-            
-            // Step 1: Map out unique providers found inside this specific target day
             let providersMap = {};
             
             snapshot.forEach(docSnap => {
@@ -692,12 +750,14 @@
 
                 const nameKey = enc.providerName || "Unknown Provider";
                 const siteKey = enc.site || "Site 1";
+                const branchKey = enc.serviceBranch || "USNR";
 
                 if (!providersMap[nameKey]) {
                     providersMap[nameKey] = {
                         name: nameKey,
+                        branch: branchKey,
                         site: siteKey,
-                        tallies: {} // Key: Code, Value: Sum of quantities
+                        tallies: {}
                     };
                 }
 
@@ -707,58 +767,53 @@
                 });
             });
 
-            // Convert to flat data array
-            let activeProvidersList = Object.values(providersMap);
-            if(activeProvidersList.length === 0) {
-                alert(`No transactional records found logged for ${targetDay}. Cannot generate export.`);
+            let sortedProviders = Object.values(providersMap);
+            if(sortedProviders.length === 0) {
+                alert(`No records found logged for ${targetDay}.`);
                 return;
             }
 
-            // Step 2: Enforce Sorting Rules: Site priority 1-3, then Alphabetical A-Z by Name
-            activeProvidersList.sort((a, b) => {
-                if (a.site !== b.site) {
-                    return a.site.localeCompare(b.site);
-                }
+            // Sorting Priorities: Site Sequence (1 -> 2 -> 3), then Alphabetical Provider Names
+            sortedProviders.sort((a, b) => {
+                if (a.site !== b.site) return a.site.localeCompare(b.site);
                 return a.name.localeCompare(b.name);
             });
 
-            // Step 3: Build horizontal row maps matching spreadsheet coordinate alignment offsets
-            let csvRow91_Header = ["Procedure Code", "Procedure Metric Label"];
-            let csvRow92_Provider = ["", "PROVIDER (Rank & Name)"]; // Excel Row 92
-            let csvRow93_Site = ["", "SITE"];                       // Excel Row 93
+            // Construct 1-to-1 Excel alignment grid row headers
+            let row1_Names = ["Code Field Header", "Description Label"]; // Row 92
+            let row2_Branches = ["", ""];                              // Row 93
+            let row3_Sites = ["", ""];                                 // Row 94
 
-            activeProvidersList.forEach(p => {
-                csvRow91_Header.push(p.name.split(" ")[0] || "Data Column");
-                csvRow92_Provider.push(`"${p.name}"`);
-                csvRow93_Site.push(`"${p.site}"`);
+            sortedProviders.forEach(p => {
+                row1_Names.push(`"${p.name}"`);
+                row2_Branches.push(`"${p.branch}"`);
+                row3_Sites.push(`"${p.site}"`);
             });
 
-            let finalCsvBodyRows = [csvRow91_Header, csvRow92_Provider, csvRow93_Site];
+            let finalCsvDataMatrix = [row1_Names, row2_Branches, row3_Sites];
 
-            // Step 4: Map each sequential code structural row (Row 94 down)
+            // Map standard procedure layout tracking rows (Row 94 down sequence)
             masterRatesMatrix.forEach(matrixItem => {
-                let dataRow = [matrixItem.Code, `"${matrixItem.Name}"`];
+                let currentLineRow = [matrixItem.Code, `"${matrixItem.Name}"`];
                 
-                // Append the specific matching calculation column for every sorted provider block
-                activeProvidersList.forEach(p => {
-                    const count = p.tallies[matrixItem.Code] || 0;
-                    dataRow.push(count);
+                sortedProviders.forEach(p => {
+                    const totalTally = p.tallies[matrixItem.Code] || 0;
+                    currentLineRow.push(totalTally);
                 });
 
-                finalCsvBodyRows.push(dataRow);
+                finalCsvDataMatrix.push(currentLineRow);
             });
 
-            // Step 5: Convert and trigger document file download pipeline
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + finalCsvBodyRows.map(e => e.join(",")).join("\n");
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + finalCsvDataMatrix.map(e => e.join(",")).join("\n");
             let encodedUri = encodeURI(csvContent);
             let link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `IRT_Excel_Paste_Matrix_${targetDay}.csv`);
+            link.setAttribute("download", `IRT_Dental_Paste_Matrix_${targetDay}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
-        } catch (err) { alert(`Processing Failure: ${err.message}`); }
+        } catch (err) { alert(`Export Error: ${err.message}`); }
     }
 </script>
 </body>
