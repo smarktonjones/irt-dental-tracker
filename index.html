@@ -39,7 +39,6 @@
         .btn-danger { background: var(--danger); color: white; }
         .btn-link { background: none; color: var(--primary-light); text-decoration: underline; border: none; font-size: 0.9rem; cursor: pointer;}
 
-        /* Scrollable Code Matrix Engine Layout */
         .search-sticky { position: sticky; top: 0; background: white; padding: 10px 0; z-index: 100; border-bottom: 1px solid var(--gray-200); margin-bottom: 12px; }
         .counter-grid { display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow-y: auto; padding-right: 4px; margin-bottom: 16px; border: 1px solid var(--gray-200); border-radius: 8px; padding: 8px; }
         .counter-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--gray-100); border-radius: 8px; }
@@ -57,7 +56,7 @@
 
         .hidden { display: none !important; }
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .metrics-section-title { font-size: 0.9rem; text-transform: uppercase; tracking: 0.05em; color: var(--gray-600); margin: 12px 0 6px 0; font-weight: 700; }
+        .metrics-section-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600); margin: 12px 0 6px 0; font-weight: 700; }
         .totals-box { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
         .stat-card { background: var(--gray-100); padding: 10px; border-radius: 8px; text-align: center; }
         .stat-num { font-size: 1.15rem; font-weight: 700; color: var(--primary); }
@@ -86,7 +85,7 @@
             
             <div id="registration-fields" class="hidden">
                 <div class="form-group">
-                    <label>Full Name / Rank Name</label>
+                    <label>Full Name / Rank Name (e.g. LCDR Willes)</label>
                     <input type="text" id="reg-name" placeholder="LCDR Willes">
                 </div>
                 <div class="form-group">
@@ -125,9 +124,9 @@
         </div>
 
         <div class="nav-tabs">
-            <button class="nav-tab active" id="tab-entry" onclick="switchView('entry')"><i class="fa-solid fa-pen-to-square"></i> Intake Form</button>
-            <button class="nav-tab" id="tab-dashboard" onclick="switchView('dashboard')"><i class="fa-solid fa-chart-pie"></i> Dashboard</button>
-            <button class="nav-tab hidden" id="tab-admin" onclick="switchView('admin')"><i class="fa-solid fa-lock"></i> Admin</button>
+            <button class="nav-tab active" id="tab-entry" onclick="switchView('entry')"><i class="fa-solid fa-pen-to-square"></i> Intake</button>
+            <button class="nav-tab" id="tab-dashboard" onclick="switchView('dashboard')"><i class="fa-solid fa-user-chart"></i> Personal</button>
+            <button class="nav-tab" id="tab-mission" onclick="switchView('mission')"><i class="fa-solid fa-globe"></i> Mission</button>
         </div>
 
         <div id="view-entry">
@@ -197,11 +196,27 @@
             </div>
         </div>
 
-        <div id="view-admin" class="hidden">
+        <div id="view-mission" class="hidden">
             <div class="card">
-                <h2><i class="fa-solid fa-user-gear"></i> Master Mission Control</h2>
-                <button class="btn btn-primary" id="btn-export-csv"><i class="fa-solid fa-file-excel"></i> Export Master Tracker CSV</button>
-                <div id="admin-summary-preview" style="margin-top: 20px; font-size: 0.85rem;"></div>
+                <h2><i class="fa-solid fa-layer-group"></i> Consolidated Mission View</h2>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>View Operations Target Date</label>
+                    <input type="date" id="mission-target-date">
+                </div>
+
+                <div class="metrics-section-title" id="lbl-mission-day-title">Target Day Summaries</div>
+                <div class="totals-box" id="grid-mission-day-stats">
+                    </div>
+
+                <div class="metrics-section-title">Global Cumulative Mission Totals</div>
+                <div class="totals-box" id="grid-mission-global-stats">
+                    </div>
+
+                <div style="margin-top: 20px; border-top: 1px solid var(--gray-200); padding-top: 16px;">
+                    <label style="font-weight: 700; color: var(--primary);"><i class="fa-solid fa-file-csv"></i> Day Sheet Export Panel</label>
+                    <p style="font-size: 0.75rem; color: var(--gray-600); margin-bottom: 12px;"> Generates an Excel-ready data paste matrix structured horizontally by Site (1, 2, 3) and alphabetical last names matching Row 92 & 93 patterns.</p>
+                    <button class="btn btn-primary" id="btn-export-day-matrix"><i class="fa-solid fa-download"></i> Download Matrix Export</button>
+                </div>
             </div>
         </div>
 
@@ -232,7 +247,6 @@
     let currentEditingDocId = null; 
     let currentEncounterData = {}; 
 
-    // Complete Standard 83-Code Array Matrix from Reference Sheet
     const masterRatesMatrix = [
         {Code: "A9999", Name: "Patient Seating (Encounter)", DWV: 0.00},
         {Code: "D0120", Name: "Periodic oral evaluation – established", DWV: 0.62},
@@ -302,7 +316,9 @@
     ];
 
     document.addEventListener("DOMContentLoaded", () => {
-        document.getElementById('form-date').valueAsDate = new Date();
+        const today = new Date();
+        document.getElementById('form-date').valueAsDate = today;
+        document.getElementById('mission-target-date').valueAsDate = today;
         buildCodeMatrixLayout();
         bindUIEvents();
     });
@@ -400,7 +416,6 @@
 
             if(!rawCode) return;
 
-            // Inject custom element directly into UI grid matrix
             const container = document.getElementById('matrix-scroll-container');
             const element = createMatrixRowDOM(rawCode, cDesc, cDwv);
             container.insertBefore(element, container.firstChild);
@@ -408,7 +423,6 @@
             currentEncounterData[rawCode] = 1;
             document.getElementById(`cnt-${rawCode}`).innerText = 1;
 
-            // Clear filter box
             document.getElementById('search-code').value = "";
             document.getElementById('custom-desc').value = "";
             document.getElementById('custom-dwv').value = "";
@@ -418,7 +432,8 @@
 
         document.getElementById('btn-submit-encounter').addEventListener('click', saveCurrentEncounterData);
         document.getElementById('form-date').addEventListener('change', calculateNextActiveSequenceNumber);
-        document.getElementById('btn-export-csv').addEventListener('click', runAdministrativeExportPipeline);
+        document.getElementById('mission-target-date').addEventListener('change', runGlobalMissionTabPipeline);
+        document.getElementById('btn-export-day-matrix').addEventListener('click', downloadStructuredExcelPasteCsv);
     }
 
     onAuthStateChanged(auth, async (user) => {
@@ -426,10 +441,6 @@
             const userDoc = await getDoc(doc(db, "users", user.uid));
             if (userDoc.exists()) {
                 currentUserProfile = userDoc.data();
-                if(currentUserProfile.role === 'admin' || user.email === 'admin@irt.mil') {
-                    currentUserProfile.role = 'admin';
-                    document.getElementById('tab-admin').classList.remove('hidden');
-                }
                 document.getElementById('user-display-name').innerText = currentUserProfile.name;
                 document.getElementById('user-display-meta').innerText = `${currentUserProfile.site} • ${currentUserProfile.branch}`;
                 document.getElementById('auth-screen').classList.add('hidden');
@@ -447,13 +458,13 @@
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
         document.getElementById('view-entry').classList.add('hidden');
         document.getElementById('view-dashboard').classList.add('hidden');
-        document.getElementById('view-admin').classList.add('hidden');
+        document.getElementById('view-mission').classList.add('hidden');
 
         document.getElementById(`tab-${viewName}`).classList.add('active');
         document.getElementById(`view-${viewName}`).classList.remove('hidden');
 
         if (viewName === 'dashboard') loadPersonalProviderMetricsDashboard();
-        if (viewName === 'admin') loadAdministrativeSuiteOverview();
+        if (viewName === 'mission') runGlobalMissionTabPipeline();
     };
 
     window.adjustCount = function(code, delta) {
@@ -492,12 +503,10 @@
         Object.keys(currentEncounterData).forEach(code => {
             const qty = currentEncounterData[code];
             if(qty > 0) {
-                // Find matching definition metadata mapping
                 let matched = masterRatesMatrix.find(m => m.Code === code);
                 let desc = matched ? matched.Name : "Custom Added Procedure";
                 let weight = matched ? matched.DWV : 0.0;
                 
-                // Read from direct injected elements if custom item
                 const injectedRow = document.getElementById(`row-${code}`);
                 if(!matched && injectedRow) {
                     desc = injectedRow.querySelector('.counter-desc').innerText.split(" (DWV:")[0];
@@ -561,12 +570,10 @@
                 recordDwv += (p.qty * p.dwv);
             });
 
-            // Cumulative aggregates calculation
             mPt++;
             mProc += pCount;
             mDwv += recordDwv;
 
-            // Daily context aggregates filters calculation
             if (enc.date === todayStr) {
                 dPt++;
                 dProc += pCount;
@@ -605,20 +612,16 @@
             currentEditingDocId = docId;
             currentEncounterData = {};
 
-            // Synchronize control panel UI variables
             document.getElementById('form-date').value = data.date;
             document.getElementById('form-sequence-num').value = data.patientSequenceNum;
             
             document.getElementById('edit-target-label').innerText = `#${data.patientSequenceNum} (${data.date})`;
             document.getElementById('edit-mode-banner').classList.remove('hidden');
 
-            // Reset standard row visual views
             document.querySelectorAll('.count-val').forEach(el => el.innerText = "0");
 
             data.procedures.forEach(p => {
                 currentEncounterData[p.code] = p.qty;
-                
-                // If code is not found inside base schema layout array list, inject it dynamically before mapping counts
                 if (!document.getElementById(`cnt-${p.code}`)) {
                     const container = document.getElementById('matrix-scroll-container');
                     const element = createMatrixRowDOM(p.code, p.description, p.dwv);
@@ -631,43 +634,131 @@
         } catch(err) { alert(`Error Loading Record: ${err.message}`); }
     };
 
-    async function loadAdministrativeSuiteOverview() {
+    /* =========================================================================
+       COMPREHENSIVE MISSION ANALYTICS PANEL & SPREADSHEET PASTE CODE EXTRACTION
+       ========================================================================= */
+    async function runGlobalMissionTabPipeline() {
+        const selectedDay = document.getElementById('mission-target-date').value;
+        document.getElementById('lbl-mission-day-title').innerText = `Site Totals: ${selectedDay}`;
+
         const snapshot = await getDocs(collection(db, "encounters"));
-        document.getElementById('admin-summary-preview').innerHTML = `
-            <p style='margin-bottom:8px;'>Total Consolidated Global Encounters Logged: <strong>${snapshot.size} Records</strong></p>
-        `;
+        
+        let targetDayStats = {"Site 1": 0, "Site 2": 0, "Site 3": 0};
+        let globalCumulativeStats = {"Site 1": 0, "Site 2": 0, "Site 3": 0};
+
+        snapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            const siteKey = data.site || "Site 1";
+            
+            let procedureSum = 0;
+            data.procedures.forEach(p => procedureSum += p.qty);
+
+            if(globalCumulativeStats[siteKey] !== undefined) {
+                globalCumulativeStats[siteKey] += procedureSum;
+            }
+            if(data.date === selectedDay && targetDayStats[siteKey] !== undefined) {
+                targetDayStats[siteKey] += procedureSum;
+            }
+        });
+
+        // Display current day site metrics UI
+        let dayHtml = "";
+        Object.keys(targetDayStats).forEach(site => {
+            dayHtml += `<div class="stat-card"><div class="stat-num">${targetDayStats[site]}</div><div class="stat-lbl">${site} Procs</div></div>`;
+        });
+        document.getElementById('grid-mission-day-stats').innerHTML = dayHtml;
+
+        // Display absolute mission tracking totals UI
+        let globalHtml = "";
+        Object.keys(globalCumulativeStats).forEach(site => {
+            globalHtml += `<div class="stat-card"><div class="stat-num">${globalCumulativeStats[site]}</div><div class="stat-lbl">${site} Cumulative</div></div>`;
+        });
+        document.getElementById('grid-mission-global-stats').innerHTML = globalHtml;
     }
 
-    async function runAdministrativeExportPipeline() {
+    async function downloadStructuredExcelPasteCsv() {
+        const targetDay = document.getElementById('mission-target-date').value;
+        if(!targetDay) { alert("Please select a target date."); return; }
+
         try {
             const snapshot = await getDocs(collection(db, "encounters"));
-            if(snapshot.empty) { alert("No data available."); return; }
-
-            let csvRows = [[
-                "Encounter Date", "Site Location", "Provider Name", "Service Branch", 
-                "Patient Daily Seq Num", "Procedure Code", "Procedure Description", 
-                "Quantity Logged", "Unit DOD Weight", "Estimated Total Value Dollar"
-            ]];
-
+            
+            // Step 1: Map out unique providers found inside this specific target day
+            let providersMap = {};
+            
             snapshot.forEach(docSnap => {
                 const enc = docSnap.data();
+                if(enc.date !== targetDay) return;
+
+                const nameKey = enc.providerName || "Unknown Provider";
+                const siteKey = enc.site || "Site 1";
+
+                if (!providersMap[nameKey]) {
+                    providersMap[nameKey] = {
+                        name: nameKey,
+                        site: siteKey,
+                        tallies: {} // Key: Code, Value: Sum of quantities
+                    };
+                }
+
                 enc.procedures.forEach(p => {
-                    csvRows.push([
-                        enc.date, `"${enc.site}"`, `"${enc.providerName}"`, enc.serviceBranch,
-                        enc.patientSequenceNum, p.code, `"${p.description}"`, p.qty, p.dwv, p.totalValue.toFixed(2)
-                    ]);
+                    if(!providersMap[nameKey].tallies[p.code]) providersMap[nameKey].tallies[p.code] = 0;
+                    providersMap[nameKey].tallies[p.code] += p.qty;
                 });
             });
 
-            let csvContent = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
+            // Convert to flat data array
+            let activeProvidersList = Object.values(providersMap);
+            if(activeProvidersList.length === 0) {
+                alert(`No transactional records found logged for ${targetDay}. Cannot generate export.`);
+                return;
+            }
+
+            // Step 2: Enforce Sorting Rules: Site priority 1-3, then Alphabetical A-Z by Name
+            activeProvidersList.sort((a, b) => {
+                if (a.site !== b.site) {
+                    return a.site.localeCompare(b.site);
+                }
+                return a.name.localeCompare(b.name);
+            });
+
+            // Step 3: Build horizontal row maps matching spreadsheet coordinate alignment offsets
+            let csvRow91_Header = ["Procedure Code", "Procedure Metric Label"];
+            let csvRow92_Provider = ["", "PROVIDER (Rank & Name)"]; // Excel Row 92
+            let csvRow93_Site = ["", "SITE"];                       // Excel Row 93
+
+            activeProvidersList.forEach(p => {
+                csvRow91_Header.push(p.name.split(" ")[0] || "Data Column");
+                csvRow92_Provider.push(`"${p.name}"`);
+                csvRow93_Site.push(`"${p.site}"`);
+            });
+
+            let finalCsvBodyRows = [csvRow91_Header, csvRow92_Provider, csvRow93_Site];
+
+            // Step 4: Map each sequential code structural row (Row 94 down)
+            masterRatesMatrix.forEach(matrixItem => {
+                let dataRow = [matrixItem.Code, `"${matrixItem.Name}"`];
+                
+                // Append the specific matching calculation column for every sorted provider block
+                activeProvidersList.forEach(p => {
+                    const count = p.tallies[matrixItem.Code] || 0;
+                    dataRow.push(count);
+                });
+
+                finalCsvBodyRows.push(dataRow);
+            });
+
+            // Step 5: Convert and trigger document file download pipeline
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + finalCsvBodyRows.map(e => e.join(",")).join("\n");
             let encodedUri = encodeURI(csvContent);
             let link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `IRT_Master_Mission_Data_Export.csv`);
+            link.setAttribute("download", `IRT_Excel_Paste_Matrix_${targetDay}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-        } catch (err) { alert(`Export Error: ${err.message}`); }
+
+        } catch (err) { alert(`Processing Failure: ${err.message}`); }
     }
 </script>
 </body>
