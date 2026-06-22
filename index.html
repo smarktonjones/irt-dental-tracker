@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRT Dental Productivity Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-600: #475569;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #f8fafc; color: var(--dark); padding-bottom: 40px; }
+        .container { width: 100%; max-width: 500px; margin: 0 auto; padding: 16px; }
+
+        /* Auth Screen & Global Card Styling */
+        .card {
+            background: white; padding: 24px; border-radius: var(--radius);
+            box-shadow: var(--shadow); margin-bottom: 20px;
+        }
+        h2 { margin-bottom: 16px; font-size: 1.4rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .form-group { margin-bottom: 14px; }
+        label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9rem; color: var(--gray-600); }
+        input, select {
+            width: 100%; padding: 12px; border: 1px solid var(--gray-200);
+            border-radius: 8px; font-size: 1rem; outline: none; transition: 0.2s;
+        }
+        input:focus, select:focus { border-color: var(--primary-light); }
+
+        /* Buttons */
+        .btn {
+            width: 100%; padding: 14px; border: none; border-radius: 8px;
+            font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.2s;
+            display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #172554; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-secondary { background: var(--gray-200); color: var(--dark); }
+        .btn-link { background: none; color: var(--primary-light); text-decoration: underline; padding: 4px; font-size: 0.9rem;}
+
+        /* Quick-List Counter Grid */
+        .counter-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+        .counter-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px; background: var(--gray-100); border-radius: 8px;
+        }
+        .counter-info { flex: 1; padding-right: 8px; }
+        .counter-title { font-weight: 600; font-size: 0.95rem; }
+        .counter-desc { font-size: 0.75rem; color: var(--gray-600); }
+        .counter-controls { display: flex; align-items: center; gap: 12px; }
+        .btn-ctrl {
+            width: 36px; height: 36px; border-radius: 50%; border: none;
+            background: white; font-size: 1.2rem; font-weight: bold; cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;
+        }
+        .btn-ctrl:active { background: var(--gray-200); }
+        .count-val { font-size: 1.1rem; font-weight: 700; min-width: 20px; text-align: center; }
+
+        /* Navigation Header Tabs */
+        .nav-tabs { display: flex; background: var(--gray-200); border-radius: 8px; padding: 4px; margin-bottom: 16px; }
+        .nav-tab {
+            flex: 1; text-align: center; padding: 10px; font-size: 0.85rem; font-weight: 600;
+            border-radius: 6px; cursor: pointer; border: none; background: none; color: var(--gray-600);
+        }
+        .nav-tab.active { background: white; color: var(--primary); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+        /* Utility Hidden Class */
+        .hidden { display: none !important; }
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .badge { background: var(--primary-light); color: white; padding: 4px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+        .totals-box { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .stat-card { background: var(--gray-100); padding: 12px; border-radius: 8px; text-align: center; }
+        .stat-num { font-size: 1.25rem; font-weight: 700; color: var(--primary); }
+        .stat-lbl { font-size: 0.75rem; color: var(--gray-600); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div id="auth-screen" class="card">
+        <h2 id="auth-title"><i class="fa-solid fa-user-shield"></i> Provider Login</h2>
+        
+        <form id="auth-form">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="auth-email" required placeholder="doctor@irt.mil">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="auth-password" required placeholder="••••••••">
+            </div>
+            
+            <div id="registration-fields" class="hidden">
+                <div class="form-group">
+                    <label>Full Name / Rank Name (e.g., LCDR Willes)</label>
+                    <input type="text" id="reg-name" placeholder="LCDR Willes">
+                </div>
+                <div class="form-group">
+                    <label>Service Branch</label>
+                    <select id="reg-branch">
+                        <option value="USNR">USNR (Navy Reserve)</option>
+                        <option value="AFRC">AFRC (Air Force Reserve)</option>
+                        <option value="USPHS">USPHS (Public Health Service)</option>
+                        <option value="USARC">USARC (Army Reserve)</option>
+                        <option value="ANG">ANG (Air National Guard)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Assigned Duty Site Location</label>
+                    <select id="reg-site">
+                        <option value="Site 1">Site 1 (RVIHC Dental)</option>
+                        <option value="Site 2">Site 2</option>
+                        <option value="Site 3">Site 3</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="btn-auth-submit">Sign In</button>
+        </form>
+        <div style="text-align: center; margin-top: 14px;">
+            <button class="btn-link" id="btn-toggle-auth">Need an account? Register Here</button>
+        </div>
+    </div>
+
+    <div id="app-screen" class="hidden">
+        <div class="header-bar">
+            <div>
+                <strong id="user-display-name">Loading Doctor...</strong>
+                <div style="font-size: 0.8rem; color: var(--gray-600);" id="user-display-meta">Site 1 • USNR</div>
+            </div>
+            <button class="btn btn-secondary" id="btn-logout" style="width: auto; padding: 8px 12px; font-size: 0.85rem;"><i class="fa-solid fa-right-from-bracket"></i></button>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchView('entry')"><i class="fa-solid fa-pen-to-square"></i> Intake Form</button>
+            <button class="nav-tab" onclick="switchView('dashboard')"><i class="fa-solid fa-chart-pie"></i> Metrics Dashboard</button>
+            <button class="nav-tab hidden" id="tab-admin" onclick="switchView('admin')"><i class="fa-solid fa-lock"></i> Admin Suite</button>
+        </div>
+
+        <div id="view-entry">
+            <div class="card">
+                <h2><i class="fa-solid fa-hospital-user"></i> Patient Encounter Entry</h2>
+                <div class="form-group">
+                    <label>Encounter Date</label>
+                    <input type="date" id="form-date" required>
+                </div>
+                <div class="form-group">
+                    <label>Auto Patient Daily Sequence Number</label>
+                    <input type="number" id="form-sequence-num" readonly value="1" style="background-color: var(--gray-100); font-weight: bold;">
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid var(--gray-200); margin: 16px 0;">
+                <label style="font-size: 1rem; color: var(--primary); font-weight: 600; margin-bottom: 12px;">Logged Procedures</label>
+
+                <div class="counter-grid">
+                    <div class="counter-row" data-code="D0140">
+                        <div class="counter-info"><div class="counter-title">D0140</div><div class="counter-desc">Limited Oral Evaluation</div></div>
+                        <div class="counter-controls">
+                            <button class="btn-ctrl" onclick="adjustCount('D0140', -1)">-</button>
+                            <span class="count-val" id="cnt-D0140">0</span>
+                            <button class="btn-ctrl" onclick="adjustCount('D0140', 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="counter-row" data-code="D0220">
+                        <div class="counter-info"><div class="counter-title">D0220</div><div class="counter-desc">Intraoral X-Ray - First Image</div></div>
+                        <div class="counter-controls">
+                            <button class="btn-ctrl" onclick="adjustCount('D0220', -1)">-</button>
+                            <span class="count-val" id="cnt-D0220">0</span>
+                            <button class="btn-ctrl" onclick="adjustCount('D0220', 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="counter-row" data-code="D2140">
+                        <div class="counter-info"><div class="counter-title">D2140</div><div class="counter-desc">Amalgam Filling - 1 Surface</div></div>
+                        <div class="counter-controls">
+                            <button class="btn-ctrl" onclick="adjustCount('D2140', -1)">-</button>
+                            <span class="count-val" id="cnt-D2140">0</span>
+                            <button class="btn-ctrl" onclick="adjustCount('D2140', 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="counter-row" data-code="D7140">
+                        <div class="counter-info"><div class="counter-title">D7140</div><div class="counter-desc">Extraction - Erupted Tooth/Root</div></div>
+                        <div class="counter-controls">
+                            <button class="btn-ctrl" onclick="adjustCount('D7140', -1)">-</button>
+                            <span class="count-val" id="cnt-D7140">0</span>
+                            <button class="btn-ctrl" onclick="adjustCount('D7140', 1)">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: var(--gray-100); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                    <label style="font-weight:600;"><i class="fa-solid fa-magnifying-glass"></i> Custom / Alternative Code Search</label>
+                    <input type="text" id="search-code" placeholder="Type Dental Code (e.g., D0120)" list="standard-codes-list">
+                    <datalist id="standard-codes-list"></datalist>
+                    
+                    <div id="custom-override-fields" class="hidden" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--gray-200);">
+                        <div class="form-group">
+                            <label>Description Override</label>
+                            <input type="text" id="custom-desc" placeholder="Enter Procedure Name">
+                        </div>
+                        <div class="form-group">
+                            <label>DOD Weight Value (DWV / RVU)</label>
+                            <input type="number" step="0.01" id="custom-dwv" placeholder="0.00">
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" id="btn-add-search-code" style="margin-top: 10px; padding: 8px;"><i class="fa-solid fa-plus"></i> Add Search Code</button>
+                </div>
+
+                <div id="dynamic-list-container" style="font-size:0.85rem; margin-bottom: 16px;"></div>
+
+                <button class="btn btn-success" id="btn-submit-encounter"><i class="fa-solid fa-cloud-arrow-up"></i> Save & Submit Encounter</button>
+            </div>
+        </div>
+
+        <div id="view-dashboard" class="hidden">
+            <div class="card">
+                <h2><i class="fa-solid fa-chart-bar"></i> Personal Metrics Tracker</h2>
+                
+                <div class="totals-box">
+                    <div class="stat-card"><div class="stat-num" id="stat-pt-total">0</div><div class="stat-lbl">Total Patients</div></div>
+                    <div class="stat-card"><div class="stat-num" id="stat-proc-total">0</div><div class="stat-lbl">Procedures Logged</div></div>
+                    <div class="stat-card" style="grid-column: span 2;"><div class="stat-num" id="stat-dwv-total">0.00</div><div class="stat-lbl">Accumulated DWV (Total Value)</div></div>
+                </div>
+
+                <h3 style="margin: 14px 0 8px 0; font-size: 1rem; color: var(--primary);">Historical Summaries</h3>
+                <div id="dashboard-history-logs" style="max-height: 250px; overflow-y: auto; font-size: 0.85rem;">
+                    </div>
+            </div>
+        </div>
+
+        <div id="view-admin" class="hidden">
+            <div class="card">
+                <h2><i class="fa-solid fa-user-gear"></i> Master Mission Control</h2>
+                <p style="font-size: 0.85rem; color: var(--gray-600); margin-bottom: 16px;">Consolidated metrics pipeline for all providers and dynamic sites.</p>
+                
+                <button class="btn btn-primary" id="btn-export-csv"><i class="fa-solid fa-file-excel"></i> Export Master Tracker CSV</button>
+                
+                <div id="admin-summary-preview" style="margin-top: 20px; font-size: 0.85rem;">
+                    </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDNuV3EJP_0EG7jjUcXmKmqNZEw8JdJ8yM",
+        authDomain: "irt-tracker-66581.firebaseapp.com",
+        projectId: "irt-tracker-66581",
+        storageBucket: "irt-tracker-66581.firebasestorage.app",
+        messagingSenderId: "326721426721",
+        appId: "1:326721426721:web:f5ea26999cb29e9f1fda60",
+        measurementId: "G-SQCEPTSNXP"
+    };
+
+    // Initialization Pipelines
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Global App Session Memory Engine state
+    let currentUserProfile = null;
+    let isRegisterMode = false;
+    let localPatientProcedures = {}; 
+
+    // Standard Rates Data Engine Reference array
+    const standardRates = [
+        {Code: "D0120", Name: "Periodic oral evaluation", DWV: 0.62},
+        {Code: "D0140", Name: "Limited oral evaluation", DWV: 0.93},
+        {Code: "D0150", Name: "Comprehensive oral evaluation", DWV: 1.05},
+        {Code: "D0160", Name: "Detailed oral evaluation by report", DWV: 1.58},
+        {Code: "D0210", Name: "Intraoral - comprehensive series", DWV: 1.64},
+        {Code: "D0220", Name: "Intraoral periapical first image", DWV: 0.36},
+        {Code: "D0230", Name: "Intraoral periapical add image", DWV: 0.30},
+        {Code: "D2140", Name: "Amalgam filling - 1 surface", DWV: 0.81},
+        {Code: "D7140", Name: "Extraction erupted tooth/root", DWV: 0.95},
+        {Code: "D7230", Name: "Impacted tooth - partially bony", DWV: 5.00},
+        {Code: "D9215", Name: "Local anesthesia with procedure", DWV: 0.39}
+    ];
+
+    // DOM Engine initialization bindings
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById('form-date').valueAsDate = new Date();
+        initDataLists();
+        bindUIEvents();
+    });
+
+    function initDataLists() {
+        const dl = document.getElementById('standard-codes-list');
+        standardRates.forEach(item => {
+            let opt = document.createElement('option');
+            opt.value = item.Code;
+            opt.innerText = `${item.Name} (DWV: ${item.DWV})`;
+            dl.appendChild(opt);
+        });
+    }
+
+    function bindUIEvents() {
+        // Toggle Signin / Registration views
+        document.getElementById('btn-toggle-auth').addEventListener('click', () => {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('auth-title').innerHTML = isRegisterMode ? '<i class="fa-solid fa-user-plus"></i> New Provider Setup' : '<i class="fa-solid fa-user-shield"></i> Provider Login';
+            document.getElementById('registration-fields').classList.toggle('hidden', !isRegisterMode);
+            document.getElementById('btn-auth-submit').innerText = isRegisterMode ? 'Create Profile & Login' : 'Sign In';
+            document.getElementById('btn-toggle-auth').innerText = isRegisterMode ? 'Already registered? Login here' : 'Need an account? Register Here';
+        });
+
+        // Authentication form execution framework
+        document.getElementById('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+
+            try {
+                if (isRegisterMode) {
+                    const name = document.getElementById('reg-name').value || "Unnamed Doctor";
+                    const branch = document.getElementById('reg-branch').value;
+                    const site = document.getElementById('reg-site').value;
+                    
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    // Commit structural data profile map to FireStore
+                    await setDoc(doc(db, "users", userCredential.user.uid), {
+                        uid: userCredential.user.uid, name, branch, site, role: 'doctor'
+                    });
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+            } catch (err) {
+                alert(`Authentication Fault Event: ${err.message}`);
+            }
+        });
+
+        // Signout Handler
+        document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+        // Search code interceptor check to expose custom description fields
+        document.getElementById('search-code').addEventListener('input', (e) => {
+            const val = e.target.value.toUpperCase();
+            const found = standardRates.find(r => r.Code === val);
+            if(val && !found) {
+                document.getElementById('custom-override-fields').classList.remove('hidden');
+            } else {
+                document.getElementById('custom-override-fields').classList.add('hidden');
+            }
+        });
+
+        // Custom search code injector engine
+        document.getElementById('btn-add-search-code').addEventListener('click', () => {
+            const rawCode = document.getElementById('search-code').value.toUpperCase().trim();
+            if(!rawCode) return;
+
+            const isStandard = standardRates.find(r => r.Code === rawCode);
+            if(isStandard) {
+                adjustCount(rawCode, 1);
+            } else {
+                const cDesc = document.getElementById('custom-desc').value || "Custom Code Procedure";
+                const cDwv = parseFloat(document.getElementById('custom-dwv').value) || 0.0;
+                
+                if(!localPatientProcedures[rawCode]) {
+                    localPatientProcedures[rawCode] = { qty: 0, desc: cDesc, dwv: cDwv };
+                }
+                localPatientProcedures[rawCode].qty += 1;
+                renderDynamicList();
+            }
+
+            // Cleanup local visual state counters
+            document.getElementById('search-code').value = "";
+            document.getElementById('custom-desc').value = "";
+            document.getElementById('custom-dwv').value = "";
+            document.getElementById('custom-override-fields').classList.add('hidden');
+        });
+
+        // Transaction form submit execution pipeline
+        document.getElementById('btn-submit-encounter').addEventListener('click', submitCurrentEncounter);
+        
+        // Date switch sequence synchronization
+        document.getElementById('form-date').addEventListener('change', refreshActivePatientSequenceNumber);
+
+        // Administrator pipeline binding
+        document.getElementById('btn-export-csv').addEventListener('click', runAdministrativeExportPipeline);
+    }
+
+    // Monitor Core App Security Sessions
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists()) {
+                currentUserProfile = userDoc.data();
+                // Check if user is an admin or if email matches standard parameters
+                if(currentUserProfile.role === 'admin' || user.email === 'admin@irt.mil') {
+                    currentUserProfile.role = 'admin';
+                    document.getElementById('tab-admin').classList.remove('hidden');
+                }
+                renderUserHeaderSummary();
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                refreshActivePatientSequenceNumber();
+                loadPersonalProviderMetricsDashboard();
+            }
+        } else {
+            currentUserProfile = null;
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('app-screen').classList.add('hidden');
+            document.getElementById('tab-admin').classList.add('hidden');
+        }
+    });
+
+    function renderUserHeaderSummary() {
+        document.getElementById('user-display-name').innerText = currentUserProfile.name;
+        document.getElementById('user-display-meta').innerText = `${currentUserProfile.site} • ${currentUserProfile.branch} (${currentUserProfile.role.toUpperCase()})`;
+    }
+
+    // Tab Navigation View switcher module
+    window.switchView = function(viewName) {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('view-entry').classList.add('hidden');
+        document.getElementById('view-dashboard').classList.add('hidden');
+        document.getElementById('view-admin').classList.add('hidden');
+
+        if (viewName === 'entry') {
+            document.getElementById('view-entry').classList.remove('view-entry'); 
+            event.target.classList.add('active');
+            document.getElementById('view-entry').classList.remove('hidden');
+        } else if (viewName === 'dashboard') {
+            event.target.classList.add('active');
+            document.getElementById('view-dashboard').classList.remove('hidden');
+            loadPersonalProviderMetricsDashboard();
+        } else if (viewName === 'admin') {
+            event.target.classList.add('active');
+            document.getElementById('view-admin').classList.remove('hidden');
+            loadAdministrativeSuiteOverview();
+        }
+    };
+
+    // Local Encounter counter engine calculation
+    window.adjustCount = function(code, delta) {
+        if(!localPatientProcedures[code]) {
+            const standard = standardRates.find(r => r.Code === code);
+            localPatientProcedures[code] = { 
+                qty: 0, 
+                desc: standard ? standard.Name : "Unknown", 
+                dwv: standard ? standard.DWV : 0.0 
+            };
+        }
+        
+        localPatientProcedures[code].qty = Math.max(0, localPatientProcedures[code].qty + delta);
+        
+        // Synchronize display text value directly if included in hardcoded quicklist rows
+        const quickEl = document.getElementById(`cnt-${code}`);
+        if(quickEl) quickEl.innerText = localPatientProcedures[code].qty;
+
+        renderDynamicList();
+    };
+
+    function renderDynamicList() {
+        const target = document.getElementById('dynamic-list-container');
+        target.innerHTML = "";
+        
+        let hasContent = false;
+        Object.keys(localPatientProcedures).forEach(code => {
+            const item = localPatientProcedures[code];
+            if(item.qty > 0) {
+                hasContent = true;
+                // Exclude displaying native static elements double inside structural markup listing
+                if(['D0140','D0220','D2140','D7140'].includes(code)) return;
+
+                let row = document.createElement('div');
+                row.style = "display:flex; justify-content:space-between; margin-bottom:5px; background:white; padding:8px; border-radius:6px; border: 1px dashed var(--gray-200);";
+                row.innerHTML = `<strong>${code}</strong> <span>${item.desc} (x${item.qty})</span>
+                                 <button class="btn-ctrl" style="width:24px; height:24px; font-size:0.8rem;" onclick="adjustCount('${code}', -1)">-</button>`;
+                target.appendChild(row);
+            }
+        });
+    }
+
+    // Sequence Generator matching specified Option C behavior logic parameters
+    async function refreshActivePatientSequenceNumber() {
+        if(!currentUserProfile) return;
+        const targetDate = document.getElementById('form-date').value;
+        const encRef = collection(db, "encounters");
+        const q = query(encRef, where("providerUid", "==", currentUserProfile.uid), where("date", "==", targetDate));
+        const snapshot = await getDocs(q);
+        document.getElementById('form-sequence-num').value = snapshot.size + 1;
+    }
+
+    // Submit payload transactional assembly engine module
+    async function submitCurrentEncounter() {
+        const date = document.getElementById('form-date').value;
+        const sequenceNum = parseInt(document.getElementById('form-sequence-num').value);
+        
+        // Filtering empty keys
+        const finalizedProcedures = [];
+        Object.keys(localPatientProcedures).forEach(code => {
+            if(localPatientProcedures[code].qty > 0) {
+                finalizedProcedures.push({
+                    code: code,
+                    description: localPatientProcedures[code].desc,
+                    qty: localPatientProcedures[code].qty,
+                    dwv: localPatientProcedures[code].dwv,
+                    totalValue: (localPatientProcedures[code].qty * localPatientProcedures[code].dwv * 115.71)
+                });
+            }
+        });
+
+        if(finalizedProcedures.length === 0) {
+            alert("Error: You must log at least one completed procedure before saving.");
+            return;
+        }
+
+        const payload = {
+            date,
+            patientSequenceNum: sequenceNum,
+            providerUid: currentUserProfile.uid,
+            providerName: currentUserProfile.name,
+            serviceBranch: currentUserProfile.branch,
+            site: currentUserProfile.site,
+            procedures: finalizedProcedures,
+            timestamp: new Date().toISOString()
+        };
+
+        try {
+            await addDoc(collection(db, "encounters"), payload);
+            alert(`Saved successfully: Patient Record #${sequenceNum}`);
+            
+            // Clean dynamic object map states 
+            localPatientProcedures = {};
+            ['D0140','D0220','D2140','D7140'].forEach(c => {
+                const el = document.getElementById(`cnt-${c}`);
+                if(el) el.innerText = 0;
+            });
+            document.getElementById('dynamic-list-container').innerHTML = "";
+            
+            refreshActivePatientSequenceNumber();
+        } catch(err) {
+            alert(`Database Commit Failure Error: ${err.message}`);
+        }
+    }
+
+    // Live Metrics Dashboard View Compiler
+    async function loadPersonalProviderMetricsDashboard() {
+        if(!currentUserProfile) return;
+        const encRef = collection(db, "encounters");
+        const q = query(encRef, where("providerUid", "==", currentUserProfile.uid));
+        const snapshot = await getDocs(q);
+
+        let totalPatients = snapshot.size;
+        let totalProcedures = 0;
+        let totalDwvAccumulated = 0;
+        let historyHTML = "";
+
+        snapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            let pCount = 0;
+            data.procedures.forEach(p => {
+                totalProcedures += p.qty;
+                totalDwvAccumulated += (p.qty * p.dwv);
+                pCount += p.qty;
+            });
+
+            historyHTML += `<div style="background:white; padding:10px; border-radius:6px; margin-bottom:8px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                <strong>Date: ${data.date} — Patient Check #${data.patientSequenceNum}</strong><br>
+                <span style="color:var(--gray-600);">${pCount} procedures cataloged during encounter.</span>
+            </div>`;
+        });
+
+        document.getElementById('stat-pt-total').innerText = totalPatients;
+        document.getElementById('stat-proc-total').innerText = totalProcedures;
+        document.getElementById('stat-dwv-total').innerText = totalDwvAccumulated.toFixed(2);
+        document.getElementById('dashboard-history-logs').innerHTML = historyHTML || "No patient tracking submissions recorded yet.";
+    }
+
+    // Admin view structural dashboard loader
+    async function loadAdministrativeSuiteOverview() {
+        const snapshot = await getDocs(collection(db, "encounters"));
+        let totalGlobalEncounters = snapshot.size;
+        
+        let overviewHTML = `<h3>Active Mission Aggregates</h3>
+                            <p>Global Saved Encounters Captured: <strong>${totalGlobalEncounters} Records</strong></p>
+                            <hr style="margin:10px 0; border:0; border-top:1px solid var(--gray-200);">`;
+        
+        document.getElementById('admin-summary-preview').innerHTML = overviewHTML;
+    }
+
+    // Administrative Flat-Row Relational CSV Exporter (Option A Strategy)
+    async function runAdministrativeExportPipeline() {
+        try {
+            const snapshot = await getDocs(collection(db, "encounters"));
+            if(snapshot.empty) {
+                alert("No active operational datasets are currently present to build the file export pipeline.");
+                return;
+            }
+
+            // CSV Headers
+            let csvRows = [
+                ["Encounter Date", "Site Location", "Provider Name", "Service Branch", "Patient Daily Seq Num", "Procedure Code", "Procedure Description", "Quantity Logged", "Unit DOD Weight", "Estimated Total Value Dollar"]
+            ];
+
+            snapshot.forEach(docSnap => {
+                const enc = docSnap.data();
+                enc.procedures.forEach(p => {
+                    csvRows.push([
+                        enc.date,
+                        `"${enc.site}"`,
+                        `"${enc.providerName}"`,
+                        enc.serviceBranch,
+                        enc.patientSequenceNum,
+                        p.code,
+                        `"${p.description}"`,
+                        p.qty,
+                        p.dwv,
+                        p.totalValue.toFixed(2)
+                    ]);
+                });
+            });
+
+            // Convert array structures to standard flat CSV file strings
+            let csvContent = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `IRT_Master_Mission_Production_Data.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (err) {
+            alert(`CSV Assembly Export Pipeline error: ${err.message}`);
+        }
+    }
+</script>
+
+</body>
+</html>
