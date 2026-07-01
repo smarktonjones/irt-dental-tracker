@@ -781,10 +781,10 @@
                 return a.name.localeCompare(b.name);
             });
 
-            // Construct 1-to-1 Excel alignment grid row headers
-            let row1_Names = ["Code Field Header", "Description Label"]; // Row 92
-            let row2_Branches = ["", ""];                              // Row 93
-            let row3_Sites = ["", ""];                                 // Row 94
+            // Construct 1-to-1 Excel alignment grid row headers with the new DWV column
+            let row1_Names = ["Code Field Header", "Description Label", "DWV"]; // Row 92
+            let row2_Branches = ["", "", ""];                              // Row 93
+            let row3_Sites = ["", "", ""];                                 // Row 94
 
             sortedProviders.forEach(p => {
                 row1_Names.push(`"${p.name}"`);
@@ -794,9 +794,10 @@
 
             let finalCsvDataMatrix = [row1_Names, row2_Branches, row3_Sites];
 
-            // Map standard procedure layout tracking rows (Row 94 down sequence)
+            // Map standard procedure layout tracking rows, now including the DWV
             masterRatesMatrix.forEach(matrixItem => {
-                let currentLineRow = [matrixItem.Code, `"${matrixItem.Name}"`];
+                // Add Code, Name, and the new DWV value to the start of the row
+                let currentLineRow = [matrixItem.Code, `"${matrixItem.Name}"`, matrixItem.DWV.toFixed(2)];
                 
                 sortedProviders.forEach(p => {
                     const totalTally = p.tallies[matrixItem.Code] || 0;
@@ -817,6 +818,7 @@
 
         } catch (err) { alert(`Export Error: ${err.message}`); }
     }
+
 </script>
 </body>
 </html>
