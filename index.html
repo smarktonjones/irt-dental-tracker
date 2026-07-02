@@ -1607,11 +1607,28 @@ const selectableCustomCodes = [
 
         let dPt = 0, dProc = 0, dDwv = 0;
         let mPt = 0, mProc = 0, mDwv = 0;
-        let logsHTML = "";
+        
+        // --- START OF CHANGES ---
 
+        // 1. Collect all encounters into an array first
+        let encounters = [];
         snapshot.forEach(docSnap => {
-            const enc = docSnap.data();
-            const id = docSnap.id;
+            encounters.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        // 2. Sort the array: by Date (descending), then Patient Number (ascending)
+        encounters.sort((a, b) => {
+            if (a.date > b.date) return -1; // Sort newest dates to the top
+            if (a.date < b.date) return 1;
+            
+            // If dates are the same, sort by patient sequence number
+            return a.patientSequenceNum - b.patientSequenceNum;
+        });
+
+        // 3. Build the HTML from the now-sorted array
+        let logsHTML = "";
+        encounters.forEach(enc => {
+            const id = enc.id;
             let pCount = 0, recordDwv = 0;
 
             enc.procedures.forEach(p => {
@@ -1641,6 +1658,8 @@ const selectableCustomCodes = [
                 </div>`;
         });
 
+        // --- END OF CHANGES ---
+
         document.getElementById('stat-day-pt').innerText = dPt;
         document.getElementById('stat-day-proc').innerText = dProc;
         document.getElementById('stat-day-dwv').innerText = dDwv.toFixed(2);
@@ -1651,6 +1670,7 @@ const selectableCustomCodes = [
 
         document.getElementById('dashboard-history-logs').innerHTML = logsHTML || "<p style='font-size:0.8rem; color:var(--gray-600);'>No historical records found.</p>";
     }
+
 
     window.loadEncounterForActiveEditing = async function(docId) {
         try {
