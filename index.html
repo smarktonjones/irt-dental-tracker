@@ -174,16 +174,17 @@
                 </div>
 
                 <label style="font-size: 0.9rem; color: var(--primary); font-weight: 700; margin-bottom: 6px; display: block;">Procedure Counters Scroll Matrix</label>
-<!-- Favorites Section (will be shown/hidden automatically by the script) -->
-<div id="favorites-container" class="hidden">
-    <div class="section-header">⭐ Favorites (Drag '☰' to Reorder)</div>
-    <div id="favorites-list" class="counter-grid" style="max-height: none;"></div>
+<div id="matrix-scroll-container">
+    <!-- Favorites Section (will be shown/hidden automatically by the script) -->
+    <div id="favorites-container" class="hidden">
+        <div class="section-header">⭐ Favorites (Drag '☰' to Reorder)</div>
+        <div id="favorites-list" class="counter-grid" style="max-height: none;"></div>
 </div>
 
 <!-- All Codes Section -->
 <div class="section-header">All Procedures</div>
 <div id="all-codes-list" class="counter-grid"></div>
-
+</div>
 
                 <button class="btn btn-success" id="btn-submit-encounter"><i class="fa-solid fa-cloud-arrow-up"></i> Save Patient Data</button>
             </div>
@@ -555,32 +556,53 @@
 
         document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
+    
         document.getElementById('btn-add-custom-code').addEventListener('click', () => {
             const rawCode = document.getElementById('search-code').value.toUpperCase().trim();
             const cDesc = document.getElementById('custom-desc').value || "Custom Procedure";
             const cDwv = parseFloat(document.getElementById('custom-dwv').value) || 0.0;
 
-            if(!rawCode) return;
+            if(!rawCode) {
+                alert("Please enter a custom code to inject.");
+                return;
+            }
+            
+            // Failsafe: check if code already exists
+            if (masterRatesMatrix.some(item => item.Code === rawCode)) {
+                alert("This code already exists in the matrix.");
+                return;
+            }
 
-            const container = document.getElementById('matrix-scroll-container');
-            const element = createMatrixRowDOM(rawCode, cDesc, cDwv);
-            container.insertBefore(element, container.firstChild);
+            // 1. Add the new procedure to our master data array
+            masterRatesMatrix.push({
+                Code: rawCode,
+                Name: cDesc,
+                DWV: cDwv
+            });
 
+            // 2. Set its count to 1 for the current encounter
             currentEncounterData[rawCode] = 1;
-            document.getElementById(`cnt-${rawCode}`).innerText = 1;
 
+            // 3. Clear the search and custom fields
             document.getElementById('search-code').value = "";
             document.getElementById('custom-desc').value = "";
             document.getElementById('custom-dwv').value = "";
             document.getElementById('custom-override-fields').classList.add('hidden');
+
+            // 4. Re-render the entire procedure list UI
+            buildCodeMatrixLayout();
+            
+            // 5. Un-filter the list to make everything visible again
             filterCodeMatrix();
         });
+    
 
         document.getElementById('btn-submit-encounter').addEventListener('click', saveCurrentEncounterData);
         document.getElementById('form-date').addEventListener('change', calculateNextActiveSequenceNumber);
         document.getElementById('mission-target-date').addEventListener('change', runGlobalMissionTabPipeline);
         document.getElementById('btn-export-day-matrix').addEventListener('click', downloadStructuredExcelPasteCsv);
     }
+
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
