@@ -43,10 +43,19 @@
         .counter-grid { display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow-y: auto; padding-right: 4px; margin-bottom: 16px; border: 1px solid var(--gray-200); border-radius: 8px; padding: 8px; }
         .counter-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--gray-100); border-radius: 8px; }
         .counter-row.highlighted { border: 2px solid var(--primary-light); background: #eff6ff; }
-        .counter-info { flex: 1; padding-right: 8px; }
+        .counter-info {
+            flex: 1 1 auto; /* Let this element grow and shrink */
+            min-width: 0;   /* CRITICAL: Allows the element to shrink below its content size */
+            padding-right: 8px;
+        }
         .counter-title { font-weight: 600; font-size: 0.95rem; }
         .counter-desc { font-size: 0.75rem; color: var(--gray-600); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
-        .counter-controls { display: flex; align-items: center; gap: 10px; }
+        .counter-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0; /* Prevent the button group from shrinking */
+        }
         .btn-ctrl { width: 32px; height: 32px; border-radius: 50%; border: none; background: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
         .count-val { font-size: 1rem; font-weight: 700; min-width: 18px; text-align: center; }
 
