@@ -69,7 +69,15 @@
         .site-block-summary { background: #f8fafc; border: 1px solid var(--gray-200); padding: 12px; border-radius: 8px; margin-bottom: 10px; }
         .site-block-title { font-weight: 700; size: 0.95rem; margin-bottom: 6px; color: var(--dark); }
         .site-grid-sub { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+
+        .fav-btn { cursor: pointer; font-size: 1.2rem; margin-right: 12px; user-select: none; color: #cbd5e1; }
+        .fav-btn.is-favorite { color: #ef4444; }
+        .drag-handle { cursor: grab; font-size: 1.2rem; margin-right: 8px; color: #94a3b8; }
+        .section-header { font-weight: 700; background: #e2e8f0; color: var(--primary); padding: 8px; text-align: center; margin-bottom: 10px; border-radius: 6px; font-size: 0.9rem;}
+        #favorites-container { border: 2px solid var(--primary-light); margin-bottom: 16px; padding: 8px; border-radius: var(--radius); background-color: #eff6ff; }
+        
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 </head>
 <body>
 
@@ -166,9 +174,16 @@
                 </div>
 
                 <label style="font-size: 0.9rem; color: var(--primary); font-weight: 700; margin-bottom: 6px; display: block;">Procedure Counters Scroll Matrix</label>
-                <div class="counter-grid" id="matrix-scroll-container">
-                    <!-- Standard + Custom Counter Rows loaded dynamically -->
-                </div>
+<!-- Favorites Section (will be shown/hidden automatically by the script) -->
+<div id="favorites-container" class="hidden">
+    <div class="section-header">⭐ Favorites (Drag '☰' to Reorder)</div>
+    <div id="favorites-list" class="counter-grid" style="max-height: none;"></div>
+</div>
+
+<!-- All Codes Section -->
+<div class="section-header">All Procedures</div>
+<div id="all-codes-list" class="counter-grid"></div>
+
 
                 <button class="btn btn-success" id="btn-submit-encounter"><i class="fa-solid fa-cloud-arrow-up"></i> Save Patient Data</button>
             </div>
@@ -253,6 +268,8 @@
     let isRegisterMode = false;
     let currentEditingDocId = null; 
     let currentEncounterData = {}; 
+    let userFavoriteCodes = [];
+    let sortableInstance = null;
 
     // Explicit 73-Row Ordered Master Matrix
         const masterRatesMatrix = [
@@ -351,52 +368,90 @@
         bindUIEvents();
     });
 
+    // REPLACED: This function now renders both lists
     function buildCodeMatrixLayout() {
-        const container = document.getElementById('matrix-scroll-container');
-        container.innerHTML = "";
+        const favList = document.getElementById('favorites-list');
+        const allList = document.getElementById('all-codes-list');
+        const favContainer = document.getElementById('favorites-container');
+        
+        favList.innerHTML = '';
+        allList.innerHTML = '';
+
+        // 1. Render Favorites in their saved order
+        if (userFavoriteCodes.length > 0) {
+            favContainer.classList.remove('hidden');
+            userFavoriteCodes.forEach(code => {
+                const item = masterRatesMatrix.find(m => m.Code === code);
+                if (item) { // Failsafe for codes that might be deleted from master list
+                    favList.appendChild(createMatrixRowDOM(item, true));
+                }
+            });
+        } else {
+            favContainer.classList.add('hidden');
+        }
+
+        // 2. Render All Other Codes
         masterRatesMatrix.forEach(item => {
-            container.appendChild(createMatrixRowDOM(item.Code, item.Name, item.DWV));
+            if (!userFavoriteCodes.includes(item.Code)) {
+                allList.appendChild(createMatrixRowDOM(item, false));
+            }
+        });
+
+        // 3. Initialize Drag-and-Drop
+        initSortable();
+        
+        // 4. Restore any counts from an active encounter (e.g., when editing)
+        Object.keys(currentEncounterData).forEach(code => {
+             const countEl = document.getElementById(`cnt-${code}`);
+             if(countEl) countEl.innerText = currentEncounterData[code];
         });
     }
 
-    function createMatrixRowDOM(code, name, dwv) {
+    // REPLACED: This function now creates rows with heart and drag icons
+    function createMatrixRowDOM(item, isFavorite) {
+        const { Code, Name, DWV } = item;
         const row = document.createElement('div');
         row.className = "counter-row";
-        row.id = `row-${code}`;
-        row.setAttribute("data-code", code);
-        row.setAttribute("data-name", name.toUpperCase());
+        row.id = `row-${Code}`;
+        row.setAttribute("data-code", Code);
+        row.setAttribute("data-name", Name.toUpperCase());
+
+        const heartClass = isFavorite ? 'fa-solid fa-heart is-favorite' : 'fa-regular fa-heart';
+        const dragHandle = isFavorite ? '<span class="drag-handle">☰</span>' : '';
+
         row.innerHTML = `
+            ${dragHandle}
+            <i class="${heartClass} fav-btn" onclick="toggleFavorite('${Code}')"></i>
             <div class="counter-info">
-                <div class="counter-title">${code}</div>
-                <div class="counter-desc" title="${name}">${name} (DWV: ${dwv.toFixed(2)})</div>
+                <div class="counter-title">${Code}</div>
+                <div class="counter-desc" title="${Name}">${Name} (DWV: ${DWV.toFixed(2)})</div>
             </div>
             <div class="counter-controls">
-                <button class="btn-ctrl" onclick="adjustCount('${code}', -1)">-</button>
-                <span class="count-val" id="cnt-${code}">0</span>
-                <button class="btn-ctrl" onclick="adjustCount('${code}', 1)">+</button>
+                <button class="btn-ctrl" onclick="adjustCount('${Code}', -1)">-</button>
+                <span class="count-val" id="cnt-${Code}">0</span>
+                <button class="btn-ctrl" onclick="adjustCount('${Code}', 1)">+</button>
             </div>
         `;
         return row;
     }
 
+    // REPLACED: This function now filters across both lists
     window.filterCodeMatrix = function() {
         const val = document.getElementById('search-code').value.toUpperCase().trim();
-        const rows = document.querySelectorAll('.counter-row');
+        const rows = document.querySelectorAll('.counter-row'); // Selects all rows in both lists
         let exactMatchFound = false;
 
         rows.forEach(row => {
             const code = row.getAttribute("data-code");
             const name = row.getAttribute("data-name");
-            if (code.includes(val) || name.includes(val)) {
-                row.classList.remove('hidden');
-                if(code === val) {
-                    exactMatchFound = true;
-                    row.classList.add('highlighted');
-                } else {
-                    row.classList.remove('highlighted');
-                }
+            const isVisible = val === '' || code.includes(val) || name.includes(val);
+            
+            row.classList.toggle('hidden', !isVisible);
+
+            if (isVisible && code === val) {
+                exactMatchFound = true;
+                row.classList.add('highlighted');
             } else {
-                row.classList.add('hidden');
                 row.classList.remove('highlighted');
             }
         });
@@ -408,6 +463,69 @@
             customOverrideBox.classList.add('hidden');
         }
     };
+
+    // ADD THESE NEW FUNCTIONS
+    // Handles saving favorites to Firestore
+    async function saveUserFavorites() {
+        if (!currentUserProfile) return;
+        try {
+            await setDoc(doc(db, "users", currentUserProfile.uid), { 
+                favoriteCodes: userFavoriteCodes 
+            }, { merge: true }); // Use merge to avoid overwriting other user data
+        } catch (error) {
+            console.error("Error saving favorites:", error);
+        }
+    }
+    
+    // Handles loading favorites from Firestore
+    async function loadUserFavorites(uid) {
+        try {
+            const userDoc = await getDoc(doc(db, "users", uid));
+            if (userDoc.exists() && userDoc.data().favoriteCodes) {
+                // Failsafe: Filter out any favorites that no longer exist in the master list
+                userFavoriteCodes = userDoc.data().favoriteCodes.filter(code => masterRatesMatrix.some(item => item.Code === code));
+            } else {
+                userFavoriteCodes = [];
+            }
+        } catch (error) {
+            console.error("Error loading favorites:", error);
+            userFavoriteCodes = [];
+        }
+    }
+
+    // Toggles a code's favorite status
+    window.toggleFavorite = function(code) {
+        const index = userFavoriteCodes.indexOf(code);
+        if (index > -1) {
+            userFavoriteCodes.splice(index, 1); // Remove if it exists
+        } else {
+            userFavoriteCodes.push(code); // Add to end if it doesn't
+        }
+        
+        buildCodeMatrixLayout(); // Re-render the entire UI
+        saveUserFavorites(); // Save changes to the database
+    }
+
+    // Initializes the SortableJS drag-and-drop functionality
+    function initSortable() {
+        const favList = document.getElementById('favorites-list');
+        if (sortableInstance) {
+            sortableInstance.destroy(); // Destroy previous instance to prevent memory leaks
+        }
+        
+        sortableInstance = new Sortable(favList, {
+            handle: '.drag-handle', // Dragging is initiated by the '☰' handle
+            animation: 150,
+            onEnd: function (evt) {
+                // Get the new order of codes from the DOM
+                const newOrder = Array.from(favList.children).map(row => row.dataset.code);
+                userFavoriteCodes = newOrder;
+                saveUserFavorites(); // Save the new order to Firestore
+            }
+        });
+    }
+
+
 
     function bindUIEvents() {
         document.getElementById('btn-toggle-auth').addEventListener('click', () => {
@@ -471,16 +589,22 @@
                 currentUserProfile = userDoc.data();
                 document.getElementById('user-display-name').innerText = currentUserProfile.name;
                 document.getElementById('user-display-meta').innerText = `${currentUserProfile.site} • ${currentUserProfile.branch}`;
+                
+                // New: Load favorites and then render the app
+                await loadUserFavorites(user.uid);
+
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('app-screen').classList.remove('hidden');
                 resetEncounterFormState();
             }
         } else {
             currentUserProfile = null;
+            userFavoriteCodes = []; // Clear favorites on logout
             document.getElementById('auth-screen').classList.remove('hidden');
             document.getElementById('app-screen').classList.add('hidden');
         }
     });
+
 
     window.switchView = function(viewName) {
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
