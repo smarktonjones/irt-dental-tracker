@@ -246,7 +246,16 @@
                 <div style="margin-top: 20px; border-top: 1px solid var(--gray-200); padding-top: 16px;">
                     <label style="font-weight: 700; color: var(--primary);"><i class="fa-solid fa-file-csv"></i> Excel Day Sheet Export Pipeline</label>
                     <p style="font-size: 0.75rem; color: var(--gray-600); margin-bottom: 12px;">Generates a spreadsheet paste matrix ordered horizontally by Site numbers, then sorted alphabetically by provider names. Rows map precisely to match the standard dental template alignment layout.</p>
-                    <button class="btn btn-primary" id="btn-export-day-matrix"><i class="fa-solid fa-download"></i> Download Matrix Export</button>
+                    <button class="btn btn-secondary" id="btn-export-day-matrix" style="width:100%; margin-top:10px;">
+                        <i class="fa-solid fa-file-csv"></i> Download Mission Daily Report
+                    </button>
+                    <button class="btn btn-primary" id="btn-export-personal-full" style="width:100%; margin-top:10px; background-color: #0ea5e9;">
+                        <i class="fa-solid fa-user-doctor"></i> Download Personal Full Report
+                    </button>
+                    <button class="btn btn-primary" id="btn-export-mission-full" style="width:100%; margin-top:10px; background-color: #4f46e5;">
+                        <i class="fa-solid fa-globe"></i> Download Mission Full Report
+                    </button>
+
                 </div>
             </div>
         </div>
@@ -1476,6 +1485,9 @@ const selectableCustomCodes = [
         document.getElementById('form-date').addEventListener('change', calculateNextActiveSequenceNumber);
         document.getElementById('mission-target-date').addEventListener('change', runGlobalMissionTabPipeline);
         document.getElementById('btn-export-day-matrix').addEventListener('click', downloadStructuredExcelPasteCsv);
+        document.getElementById('btn-export-personal-full').addEventListener('click', () => generateFullReport('personal'));
+        document.getElementById('btn-export-mission-full').addEventListener('click', () => generateFullReport('mission'));
+
     }
 
 
@@ -1860,6 +1872,104 @@ const selectableCustomCodes = [
         } catch (err) { alert(`Export Error: ${err.message}`); }
     }
 
+    async function generateFullReport(scope) {
+        if (scope === 'personal' && !currentUserProfile) {
+            alert("You must be logged in to download a personal report.");
+            return;
+        }
+
+        try {
+            let snapshot;
+            if (scope === 'personal') {
+                // Fetch only the logged-in user's records
+                const q = query(collection(db, "encounters"), where("providerUid", "==", currentUserProfile.uid));
+                snapshot = await getDocs(q);
+            } else {
+                // Fetch ALL records for the whole mission
+                snapshot = await getDocs(collection(db, "encounters"));
+            }
+
+            let encounters = [];
+            snapshot.forEach(docSnap => encounters.push(docSnap.data()));
+
+            if (encounters.length === 0) {
+                alert(`No records found for the ${scope} report.`);
+                return;
+            }
+
+            // --- SORTING LOGIC ---
+            encounters.sort((a, b) => {
+                // If Mission scope, group by Provider Name first
+                if (scope === 'mission') {
+                    const nameA = a.providerName || "Unknown";
+                    const nameB = b.providerName || "Unknown";
+                    if (nameA < nameB) return -1;
+                    if (nameA > nameB) return 1;
+                }
+                // Then sort by Date (Ascending)
+                if (a.date < b.date) return -1;
+                if (a.date > b.date) return 1;
+                // Finally sort by Patient Sequence Number (Ascending)
+                return (a.patientSequenceNum || 0) - (b.patientSequenceNum || 0);
+            });
+
+            // --- BUILD CSV HEADERS ---
+            let csvData = [];
+            
+            if (scope === 'mission') {
+                csvData.push(["Code", "Description", "DWV", ...encounters.map(e => `"${e.providerName || 'Unknown'}"`), "Total DWV"]);
+                csvData.push(["", "", "", ...encounters.map(e => e.date), ""]);
+            } else {
+                csvData.push(["Code", "Description", "DWV", ...encounters.map(e => e.date), "Total DWV"]);
+            }
+            
+            // Add the Patient Record row for both
+            csvData.push(["", "", "", ...encounters.map(e => `"Pt #${e.patientSequenceNum || 0}"`), ""]);
+
+            let grandTotalDwv = 0;
+
+            // --- BUILD PROCEDURE ROWS ---
+            masterRatesMatrix.forEach(matrixItem => {
+                let row = [matrixItem.Code, `"${matrixItem.Name}"`, matrixItem.DWV.toFixed(2)];
+                let rowTotalDwv = 0;
+
+                encounters.forEach(enc => {
+                    const proc = enc.procedures.find(p => p.code === matrixItem.Code);
+                    const qty = proc ? proc.qty : 0;
+                    row.push(qty); // Add the quantity under the patient's column
+                    rowTotalDwv += (qty * matrixItem.DWV);
+                });
+
+                row.push(rowTotalDwv.toFixed(2)); // Last column: Total DWV for this procedure
+                grandTotalDwv += rowTotalDwv;
+                csvData.push(row);
+            });
+
+            // --- BOTTOM RIGHT TOTAL ---
+            let bottomRow = ["", "GRAND TOTAL", ""];
+            encounters.forEach(() => bottomRow.push("")); // Pad empty spaces for every patient column
+            bottomRow.push(grandTotalDwv.toFixed(2));     // Put the grand total in the last column
+            csvData.push(bottomRow);
+
+            // --- TRIGGER DOWNLOAD ---
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csvData.map(e => e.join(",")).join("\n");
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            
+            let filename = scope === 'mission' ? 'IRT_Mission_Full_Report.csv' : `IRT_Personal_Report_${currentUserProfile.name.replace(/\s+/g, '_')}.csv`;
+            link.setAttribute("download", filename);
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+        } catch (err) { alert(`Export Error: ${err.message}`); }
+    }
+
+
+
+    
 </script>
 </body>
 </html>
