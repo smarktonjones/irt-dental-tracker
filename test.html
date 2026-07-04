@@ -7,10 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
     <style>
         :root {
             --primary: #1e3a8a;
@@ -31,281 +27,235 @@
 
         .card { background: white; padding: 24px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; }
         h2 { margin-bottom: 16px; font-size: 1.4rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-        .form-group { margin-bottom: 16px; }
-        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: var(--gray-600); }
-        
-        input, select, textarea { 
-            width: 100%; padding: 10px 14px; border: 1px solid var(--gray-200); 
-            border-radius: 8px; font-size: 1rem; background-color: #fff; transition: border 0.2s;
+        .form-group { margin-bottom: 14px; }
+        label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9rem; color: var(--gray-600); }
+        input, select { width: 100%; padding: 12px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 1rem; outline: none; }
+        input:focus, select:focus { border-color: var(--primary-light); }
+
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; display: inline-flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-secondary { background: var(--gray-200); color: var(--dark); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-link { background: none; color: var(--primary-light); text-decoration: underline; border: none; font-size: 0.9rem; cursor: pointer;}
+
+        .search-sticky { position: sticky; top: 0; background: white; padding: 10px 0; z-index: 100; border-bottom: 1px solid var(--gray-200); margin-bottom: 12px; }
+        .counter-grid { display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow-y: auto; padding-right: 4px; margin-bottom: 16px; border: 1px solid var(--gray-200); border-radius: 8px; padding: 8px; }
+        .counter-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--gray-100); border-radius: 8px; }
+        .counter-row.highlighted { border: 2px solid var(--primary-light); background: #eff6ff; }
+        .counter-info {
+            flex: 1 1 auto; /* Let this element grow and shrink */
+            min-width: 0;   /* CRITICAL: Allows the element to shrink below its content size */
+            padding-right: 8px;
         }
-        input:focus, select:focus { border-color: var(--primary-light); outline: none; }
-
-        .btn { 
-            width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; 
-            font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;
+        .counter-title { font-weight: 600; font-size: 0.95rem; }
+        .counter-desc { font-size: 0.75rem; color: var(--gray-600); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
+        .counter-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0; /* Prevent the button group from shrinking */
         }
-        .btn-primary { background-color: var(--primary); color: white; }
-        .btn-primary:hover { background-color: #172554; }
-        .btn-success { background-color: var(--success); color: white; }
-        .btn-success:hover { background-color: #059669; }
-        .btn-danger { background-color: var(--danger); color: white; }
-        .btn-danger:hover { background-color: #dc2626; }
-        .btn-secondary { background-color: var(--gray-200); color: var(--dark); }
-        .btn-secondary:hover { background-color: #cbd5e1; }
+        .btn-ctrl { width: 32px; height: 32px; border-radius: 50%; border: none; background: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
+        .count-val { font-size: 1rem; font-weight: 700; min-width: 18px; text-align: center; }
 
-        .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 4px 0; }
-        .logo-area { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--primary); font-size: 1.1rem; }
-        
-        .tab-btn-group { display: flex; background: var(--gray-100); padding: 4px; border-radius: 8px; margin-bottom: 20px; }
-        .tab-btn { flex: 1; padding: 8px; background: none; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500; color: var(--gray-600); }
-        .tab-btn.active { background: white; color: var(--primary); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-
-        .provider-pill-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-        .provider-pill { padding: 6px 12px; background: var(--gray-100); border-radius: 20px; font-size: 0.85rem; font-weight: 500; cursor: pointer; border: 1px solid transparent; }
-        .provider-pill.active { background: #eff6ff; color: var(--primary); border-color: var(--primary-light); font-weight: 600; }
-
-        .procedure-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--gray-100); }
-        .procedure-item:last-child { border-bottom: none; }
-        .proc-info { flex: 1; padding-right: 12px; }
-        .proc-name { font-weight: 500; font-size: 0.95rem; line-height: 1.3; }
-        .proc-meta { font-size: 0.8rem; color: var(--gray-600); margin-top: 2px; }
-        .counter-controls { display: flex; align-items: center; gap: 12px; }
-        .count-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--gray-200); background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-        .count-btn:active { background: var(--gray-100); }
-        .count-val { font-size: 1.1rem; font-weight: 600; min-width: 24px; text-align: center; }
-
-        .summary-stat-box { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-        .stat-card { background: var(--gray-100); padding: 12px; border-radius: 8px; text-align: center; }
-        .stat-label { font-size: 0.8rem; color: var(--gray-600); margin-bottom: 4px; }
-        .stat-value { font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+        .nav-tabs { display: flex; background: var(--gray-200); border-radius: 8px; padding: 4px; margin-bottom: 16px; }
+        .nav-tab { flex: 1; text-align: center; padding: 10px; font-size: 0.85rem; font-weight: 600; border-radius: 6px; cursor: pointer; border: none; background: none; color: var(--gray-600); }
+        .nav-tab.active { background: white; color: var(--primary); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 
         .hidden { display: none !important; }
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .metrics-section-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--primary); margin: 16px 0 8px 0; font-weight: 700; border-bottom: 1px solid var(--gray-200); padding-bottom: 4px; }
+        .totals-box { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .stat-card { background: var(--gray-100); padding: 10px; border-radius: 8px; text-align: center; }
+        .stat-num { font-size: 1.15rem; font-weight: 700; color: var(--primary); }
+        .stat-lbl { font-size: 0.7rem; color: var(--gray-600); }
         
-        .day-badge { background: var(--primary); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
-        .history-entry { padding: 12px; border: 1px solid var(--gray-200); border-radius: 8px; margin-bottom: 8px; font-size: 0.9rem; }
-        .search-container { position: relative; margin-bottom: 16px; }
-        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-600); }
-        .search-input { padding-left: 36px; }
+        .history-item { background: white; padding: 12px; border-radius: 8px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border-left: 4px solid var(--primary-light); cursor: pointer; transition: 0.15s; }
+        .history-item:hover { background: #f1f5f9; transform: translateX(2px); }
+        .edit-banner { background: #fef3c7; border: 1px solid #f59e0b; color: #b45309; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;}
+
+        .site-block-summary { background: #f8fafc; border: 1px solid var(--gray-200); padding: 12px; border-radius: 8px; margin-bottom: 10px; }
+        .site-block-title { font-weight: 700; size: 0.95rem; margin-bottom: 6px; color: var(--dark); }
+        .site-grid-sub { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+
+        .fav-btn { cursor: pointer; font-size: 1.2rem; margin-right: 12px; user-select: none; color: #cbd5e1; }
+        .fav-btn.is-favorite { color: #ef4444; }
+        .drag-handle { cursor: grab; font-size: 1.2rem; margin-right: 8px; color: #94a3b8; }
+        .section-header { font-weight: 700; background: #e2e8f0; color: var(--primary); padding: 8px; text-align: center; margin-bottom: 10px; border-radius: 6px; font-size: 0.9rem;}
+        #favorites-container { border: 2px solid var(--primary-light); margin-bottom: 16px; padding: 8px; border-radius: var(--radius); background-color: #eff6ff; }
         
-        .auth-toggle-text { text-align: center; margin-top: 14px; font-size: 0.85rem; color: var(--gray-600); cursor: pointer; }
-        .auth-toggle-text span { color: var(--primary-light); font-weight: 600; text-decoration: underline; }
-        .user-profile-badge { font-size: 0.8rem; color: var(--gray-600); text-align: center; margin-bottom: 10px; font-style: italic; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 </head>
 <body>
 
 <div class="container">
 
-    <div id="screen-auth" class="card">
-        <div style="text-align: center; margin-bottom: 20px;">
-            <i class="fa-solid fa-user-shield" style="font-size: 3rem; color: var(--primary);"></i>
-            <h2 style="justify-content: center; margin-top: 10px;" id="auth-title">Provider Portal Sign In</h2>
-            <p style="font-size: 0.85rem; color: var(--gray-600);" id="auth-subtitle">Access authorized dental operational logs</p>
-        </div>
-        
-        <div class="form-group">
-            <label for="auth-email">Military / Government Email Address</label>
-            <input type="email" id="auth-email" placeholder="doctor@mail.mil">
-        </div>
-        
-        <div class="form-group">
-            <label for="auth-password">Account Access Key / Password</label>
-            <input type="password" id="auth-password" placeholder="••••••••">
-        </div>
-
-        <div id="auth-registration-fields" class="hidden">
+    <!-- AUTHENTICATION SCREEN -->
+    <div id="auth-screen" class="card">
+        <h2 id="auth-title"><i class="fa-solid fa-user-shield"></i> Provider Login</h2>
+        <form id="auth-form">
             <div class="form-group">
-                <label for="auth-name">Full Name & Rank</label>
-                <input type="text" id="auth-name" placeholder="LCDR Jones">
+                <label>Email Address</label>
+                <input type="email" id="auth-email" required placeholder="doctor@irt.mil">
             </div>
             <div class="form-group">
-                <label for="auth-branch">Service Branch Component</label>
-                <select id="auth-branch">
-                    <option value="USNR">USNR (Navy Reserve)</option>
-                    <option value="USARC">USARC (Army Reserve)</option>
-                    <option value="ANG">ANG (Air National Guard)</option>
-                    <option value="USPHS">USPHS (Public Health Service)</option>
-                </select>
+                <label>Password</label>
+                <input type="password" id="auth-password" required placeholder="••••••••">
             </div>
-        </div>
-
-        <button class="btn btn-primary" id="auth-submit-btn" onclick="handleAuthSubmission()"><i class="fa-solid fa-lock-open"></i> Authorize Credential</button>
-        
-        <div class="auth-toggle-text" id="auth-toggle-trigger" onclick="toggleAuthMode()">
-            Don't have an active tracker profile? <span>Register Account Here</span>
-        </div>
-    </div>
-
-    <div id="screen-setup" class="card hidden">
-        <h2><i class="fa-solid fa-gear"></i> Mission Configuration</h2>
-        <div class="user-profile-badge" id="setup-profile-string">Logged in as: Unknown Provider</div>
-        <p style="font-size:0.9rem; color: var(--gray-600); margin-bottom:20px;">Initialize the mission data store metrics. Enter provider metadata info below.</p>
-        
-        <div class="form-group">
-            <label for="setup-mission-name">Mission / Exercise Name</label>
-            <input type="text" id="setup-mission-name" value="IRT Round Valley/Operation Walking Shield">
-        </div>
-        
-        <div class="form-group">
-            <label for="setup-site-name">Site Name / Location</label>
-            <input type="text" id="setup-site-name" value="RVIHC Dental">
-        </div>
-
-        <div class="form-group">
-            <label>Configured Providers (JSON Syntax Array)</label>
-            <textarea id="setup-providers-json" rows="8" style="font-family: monospace; font-size:0.85rem;">[
-  {"name": "LCDR Willes", "branch": "USNR"},
-  {"name": "LCDR Warner", "branch": "USNR"},
-  {"name": "CAPT Meymand", "branch": "USNR"},
-  {"name": "CDR Thai", "branch": "USNR"},
-  {"name": "CDR Buzzell", "branch": "USNR"},
-  {"name": "LTC Morgan", "branch": "USARC"},
-  {"name": "MAJ Caldon", "branch": "ANG"}
-]</textarea>
-        </div>
-
-        <button class="btn btn-primary" onclick="executeSetupWizard()"><i class="fa-solid fa-play"></i> Initialize Mission Engine</button>
-    </div>
-
-    <div id="main-operational-module" class="hidden">
-        
-        <div class="nav-header">
-            <div class="logo-area">
-                <i class="fa-solid fa-tooth"></i> 
-                <span>IRT Dental Ops</span>
-                <span class="day-badge" id="global-day-badge">Day 1</span>
-            </div>
-            <div style="display: flex; gap: 6px;">
-                <button class="btn btn-secondary" style="width:auto; padding: 6px 12px; font-size:0.85rem;" onclick="resetToSetupScreen()">
-                    <i class="fa-solid fa-arrows-rotate"></i> Reset
-                </button>
-                <button class="btn btn-danger" style="width:auto; padding: 6px 12px; font-size:0.85rem; background-color: #475569;" onclick="handleSignOut()">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
-            </div>
-        </div>
-
-        <div class="tab-btn-group">
-            <button class="tab-btn active" id="tab-log" onclick="switchTab('log')"><i class="fa-solid fa-pen-to-square"></i> Record Log</button>
-            <button class="tab-btn" id="tab-review" onclick="switchTab('review')"><i class="fa-solid fa-list-check"></i> Review & Stats</button>
-            <button class="tab-btn" id="tab-export" onclick="switchTab('export')"><i class="fa-solid fa-file-export"></i> Export Hub</button>
-        </div>
-
-        <div id="content-log">
-            <div class="form-group">
-                <label>Select Active Working Provider</label>
-                <div class="provider-pill-list" id="logging-provider-pills">
-                    </div>
-            </div>
-
-            <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div>
-                    <label for="form-date-input">Calendar Date</label>
-                    <input type="date" id="form-date-input" value="2026-06-22" onchange="syncDateToDayLabel()">
+            
+            <div id="registration-fields" class="hidden">
+                <div class="form-group">
+                    <label>Full Name / Rank Name (e.g. CAPT Horning)</label>
+                    <input type="text" id="reg-name" placeholder="CAPT Horning">
                 </div>
-                <div>
-                    <label for="form-day-select">Target Mission Day</label>
-                    <select id="form-day-select" onchange="syncDaySelectToBadge()">
-                        <option value="Day1" selected>Day 1</option>
-                        <option value="Day2">Day 2</option>
-                        <option value="Day3">Day 3</option>
-                        <option value="Day4">Day 4</option>
-                        <option value="Day5">Day 5</option>
-                        <option value="Day6">Day 6</option>
-                        <option value="Day7">Day 7</option>
-                        <option value="Day8">Day 8</option>
-                        <option value="Day9">Day 9</option>
-                        <option value="Day10">Day 10</option>
+                <div class="form-group">
+                    <label>Service Branch Code (e.g. USNR)</label>
+                    <input type="text" id="reg-branch" placeholder="USNR" style="text-transform: uppercase;">
+                </div>
+                <div class="form-group">
+                    <label>Assigned Duty Site Location</label>
+                    <select id="reg-site">
+                        <option value="Site 1">Site 1</option>
+                        <option value="Site 2">Site 2</option>
+                        <option value="Site 3">Site 3</option>
                     </select>
                 </div>
             </div>
+            <button type="submit" class="btn btn-primary" id="btn-auth-submit">Sign In</button>
+        </form>
+        <div style="text-align: center; margin-top: 14px;">
+            <button class="btn-link" id="btn-toggle-auth">Need an account? Register Here</button>
+        </div>
+    </div>
 
-            <div class="card" style="padding: 16px; margin-bottom: 16px;">
-                <div class="search-container">
-                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" id="procedure-search" class="search-input" placeholder="Search code or description..." oninput="filterProcedureInterfaceList()">
-                </div>
-
-                <div id="procedure-incremental-list" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--gray-200); border-radius: 8px; background: #fff;">
-                    </div>
+    <!-- MAIN APP WRAPPER -->
+    <div id="app-screen" class="hidden">
+        <div class="header-bar">
+            <div>
+                <strong id="user-display-name">Loading...</strong>
+                <div style="font-size: 0.8rem; color: var(--gray-600);" id="user-display-meta">Site 1 • USNR</div>
             </div>
-
-            <div class="card" style="padding: 16px;">
-                <h3 style="font-size:1rem; margin-bottom:10px; color: var(--primary);"><i class="fa-solid fa-plus-minus"></i> Add Unlisted Custom Code</h3>
-                <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
-                    <input type="text" id="custom-code" placeholder="Code (e.g. D9999)">
-                    <input type="number" step="0.01" id="custom-dwv" placeholder="DWV (e.g. 1.50)">
-                </div>
-                <div class="form-group" style="margin-bottom:10px;">
-                    <input type="text" id="custom-desc" placeholder="Nomenclature / Description text">
-                </div>
-                <button class="btn btn-secondary" style="padding:8px;" onclick="injectCustomCodeToDataset()"><i class="fa-solid fa-square-plus"></i> Inject Custom Record</button>
-            </div>
+            <button class="btn btn-secondary" id="btn-logout" style="width: auto; padding: 8px 12px; font-size: 0.85rem;"><i class="fa-solid fa-right-from-bracket"></i></button>
         </div>
 
-        <div id="content-review" class="hidden">
-            <div class="card">
-                <h2><i class="fa-solid fa-chart-pie"></i> Provider Summary Matrix</h2>
-                <div class="form-group">
-                    <label for="review-provider-filter">Filter Live Metrics View By Provider</label>
-                    <select id="review-provider-filter" onchange="renderReviewStatsDashboard()">
-                        </select>
-                </div>
-
-                <div class="summary-stat-box">
-                    <div class="stat-card">
-                        <div class="stat-label">Total Procedures</div>
-                        <div class="stat-value" id="stat-proc-count">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Calculated DWV Total</div>
-                        <div class="stat-value" id="stat-dwv-sum">0.00</div>
-                    </div>
-                </div>
-
-                <h3 style="font-size:1rem; margin-bottom:10px; color: var(--primary);">Active Day Registered Procedures Logs</h3>
-                <div id="live-history-ledger" style="max-height: 250px; overflow-y:auto;">
-                    </div>
-            </div>
+        <div class="nav-tabs">
+            <button class="nav-tab active" id="tab-entry" onclick="switchView('entry')"><i class="fa-solid fa-pen-to-square"></i> Intake</button>
+            <button class="nav-tab" id="tab-dashboard" onclick="switchView('dashboard')"><i class="fa-solid fa-user-md"></i> Personal</button>
+            <button class="nav-tab" id="tab-mission" onclick="switchView('mission')"><i class="fa-solid fa-chart-line"></i> Mission</button>
         </div>
 
-        <div id="content-export" class="hidden">
+        <!-- VIEW 1: INTAKE FORM -->
+        <div id="view-entry">
             <div class="card">
-                <h2><i class="fa-solid fa-file-csv"></i> Matrix Layout Exports</h2>
-                <p style="font-size:0.85rem; color: var(--gray-600); margin-bottom:20px;">
-                    Generate column formats optimized for pasting into row 94 of your master worksheet data tables.
-                </p>
-
-                <div class="form-group">
-                    <label for="export-day-select">Target Single Day Matrix Select</label>
-                    <select id="export-day-select">
-                        <option value="Day1">Day 1</option>
-                        <option value="Day2">Day 2</option>
-                        <option value="Day3">Day 3</option>
-                        <option value="Day4">Day 4</option>
-                        <option value="Day5">Day 5</option>
-                        <option value="Day6">Day 6</option>
-                        <option value="Day7">Day 7</option>
-                        <option value="Day8">Day 8</option>
-                        <option value="Day9">Day 9</option>
-                        <option value="Day10">Day 10</option>
-                    </select>
+                <h2><i class="fa-solid fa-hospital-user"></i> Patient Encounter</h2>
+                
+                <div id="edit-mode-banner" class="edit-banner hidden">
+                    <span><i class="fa-solid fa-user-pen"></i> Editing Patient Record <strong id="edit-target-label">#0</strong></span>
+                    <button class="btn-link" style="color:#b45309; font-weight:bold;" onclick="cancelEditMode()">Cancel Edit</button>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <button class="btn btn-success" onclick="exportDataMatrixCSV('single')">
-                        <i class="fa-solid fa-download"></i> Export Single Target Day Matrix
-                    </button>
+                <div class="form-group">
+                    <label>Encounter Date</label>
+                    <input type="date" id="form-date" required>
+                </div>
+                <div class="form-group">
+                    <label>Patient Daily Sequence Number</label>
+                    <input type="number" id="form-sequence-num" readonly style="background-color: var(--gray-100); font-weight: bold;">
+                </div>
+
+                <div class="search-sticky">
+                    <label style="font-weight:600;"><i class="fa-solid fa-filter"></i> Direct Grid Search / Custom Override Filter</label>
+                    <input type="text" id="search-code" placeholder="Type to filter matrix or add custom code..." oninput="filterCodeMatrix()">
                     
-                    <button class="btn btn-primary" onclick="exportDataMatrixCSV('mission')">
-                        <i class="fa-solid fa-globe"></i> Export Mission-Wide Data Matrix
-                    </button>
+<div id="custom-override-fields" class="hidden" style="margin-top: 10px; background: var(--gray-100); padding: 10px; border-radius: 6px;">
+    <div class="form-group">
+        <label>Select a Procedure to Inject</label>
+        <select id="custom-code-selector">
+            <!-- Options will be populated by the script -->
+        </select>
+    </div>
+    <button class="btn btn-primary" id="btn-add-custom-code" style="padding: 8px; font-size: 0.9rem;"><i class="fa-solid fa-plus"></i> Inject Selected Code (not for IRT report)</button>
+</div>
+
                 </div>
 
-                <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--gray-200);">
-                    <button class="btn btn-danger" onclick="purgeEntireApplicationStorageData()">
-                        <i class="fa-solid fa-trash-can"></i> Clear All Internal Data Stores
+                <label style="font-size: 0.9rem; color: var(--primary); font-weight: 700; margin-bottom: 6px; display: block;">Procedure Counters Scroll Matrix</label>
+<div id="matrix-scroll-container">
+    <!-- Favorites Section (will be shown/hidden automatically by the script) -->
+    <div id="favorites-container" class="hidden">
+        <div class="section-header">⭐ Favorites (Drag '☰' to Reorder)</div>
+        <div id="favorites-list" class="counter-grid" style="max-height: none;"></div>
+</div>
+
+<!-- All Codes Section -->
+<div class="section-header">Procedures reported on IRT tracker</div>
+<div id="all-codes-list" class="counter-grid"></div>
+</div>
+
+                <button class="btn btn-success" id="btn-submit-encounter"><i class="fa-solid fa-cloud-arrow-up"></i> Save Patient Data</button>
+            </div>
+        </div>
+
+        <!-- VIEW 2: PERSONAL DASHBOARD TOTALS -->
+        <div id="view-dashboard" class="hidden">
+            <div class="card">
+                <h2><i class="fa-solid fa-chart-bar"></i> Personal Metrics Tracker</h2>
+                
+                <div class="metrics-section-title">Today's Operational Summary</div>
+                <div class="totals-box">
+                    <div class="stat-card"><div class="stat-num" id="stat-day-pt">0</div><div class="stat-lbl">Daily Patients</div></div>
+                    <div class="stat-card"><div class="stat-num" id="stat-day-proc">0</div><div class="stat-lbl">Daily Procedures</div></div>
+                    <div class="stat-card" style="grid-column: span 2;"><div class="stat-num" id="stat-day-dwv">0.00</div><div class="stat-lbl">Daily Logged DWV Value</div></div>
+                </div>
+
+                <div class="metrics-section-title">Cumulative Mission Totals</div>
+                <div class="totals-box">
+                    <div class="stat-card"><div class="stat-num" id="stat-miss-pt">0</div><div class="stat-lbl">Total Patients</div></div>
+                    <div class="stat-card"><div class="stat-num" id="stat-miss-proc">0</div><div class="stat-lbl">Total Procedures</div></div>
+                    <div class="stat-card" style="grid-column: span 2;"><div class="stat-num" id="stat-miss-dwv">0.00</div><div class="stat-lbl">Accumulated Mission DWV</div></div>
+                </div>
+
+                <h3 style="margin: 18px 0 6px 0; font-size: 1rem; color: var(--primary);"><i class="fa-solid fa-clock-rotate-left"></i> History Log <span style="font-size:0.75rem; color:var(--gray-600); font-weight:normal;">(Tap row to Edit)</span></h3>
+                <div id="dashboard-history-logs" style="max-height: 200px; overflow-y: auto;">
+                    <!-- Patient logs rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: MISSION OVERVIEW TAB -->
+        <div id="view-mission" class="hidden">
+            <div class="card">
+                <h2><i class="fa-solid fa-users-gear"></i> Consolidated Mission Panel</h2>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>View Operations Target Date</label>
+                    <input type="date" id="mission-target-date">
+                </div>
+
+                <div class="metrics-section-title" id="lbl-mission-day-title">Target Day Breakdown</div>
+                <div id="container-mission-day-breakdown">
+                    <!-- Dynamic rendering of Site data blocks (Patients, Procs, DWV) -->
+                </div>
+
+                <div class="metrics-section-title">Global Cumulative Mission Breakdown</div>
+                <div id="container-mission-global-breakdown">
+                    <!-- Dynamic rendering of Site totals cumulative blocks -->
+                </div>
+
+                <div style="margin-top: 20px; border-top: 1px solid var(--gray-200); padding-top: 16px;">
+                    <label style="font-weight: 700; color: var(--primary);"><i class="fa-solid fa-file-csv"></i> Excel Day Sheet Export Pipeline</label>
+                    <p style="font-size: 0.75rem; color: var(--gray-600); margin-bottom: 12px;">Generates a spreadsheet paste matrix ordered horizontally by Site numbers, then sorted alphabetically by provider names. Rows map precisely to match the standard dental template alignment layout.</p>
+                    <button class="btn btn-secondary" id="btn-export-day-matrix" style="width:100%; margin-top:10px;">
+                        <i class="fa-solid fa-file-csv"></i> Download Mission Selected Day Report
                     </button>
+                    <button class="btn btn-primary" id="btn-export-personal-full" style="width:100%; margin-top:10px; background-color: #0ea5e9;">
+                        <i class="fa-solid fa-user-doctor"></i> Download Personal Full Report
+                    </button>
+                    <button class="btn btn-primary" id="btn-export-mission-full" style="width:100%; margin-top:10px; background-color: #4f46e5;">
+                        <i class="fa-solid fa-globe"></i> Download Mission Full Report
+                    </button>
+
                 </div>
             </div>
         </div>
@@ -313,10 +263,11 @@
     </div>
 </div>
 
-<script>
-    // ----------------------------------------------------
-    // PLACE YOUR EXISTING FIREBASE CONFIGURATION OBJECT HERE:
-    // ----------------------------------------------------
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, updateDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
     const firebaseConfig = {
         apiKey: "AIzaSyDNuV3EJP_0EG7jjUcXmKmqNZEw8JdJ8yM",
         authDomain: "irt-tracker-66581.firebaseapp.com",
@@ -327,576 +278,1698 @@
         measurementId: "G-SQCEPTSNXP"
     };
 
-    // Initialize Firebase Engine Reference Instance
-    if (firebaseConfig.apiKey !== "YOUR_FIREBASE_API_KEY") {
-        firebase.initializeApp(firebaseConfig);
-    }
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    // Comprehensive 2025 DHA-integrated Procedure Rates Registry
-    let masterRatesMatrix = [
-        {Code: "A9999", Name: "Patient Seating (Encounter)", DWV: 0.00},
-        {Code: "D0120", Name: "Periodic oral evaluation – established patient", DWV: 0.62},
-        {Code: "D0140", Name: "Limited oral evaluation – problem focused", DWV: 0.93},
-        {Code: "D0145", Name: "Oral evaluation for a child under three and counseling", DWV: 0.91},
-        {Code: "D0150", Name: "Comprehensive oral evaluation – new/established patient", DWV: 1.05},
-        {Code: "D0160", Name: "Detailed/extensive oral evaluation – problem focused", DWV: 1.58},
-        {Code: "D0171", Name: "Re-evaluation – post-operative office visit", DWV: 0.75},
-        {Code: "D0190", Name: "Screening of a patient", DWV: 0.50},
-        {Code: "D0210", Name: "Intraoral - comprehensive series of radiographic images", DWV: 1.64},
-        {Code: "D0220", Name: "Intraoral – periapical first radiographic image", DWV: 0.36},
-        {Code: "D0230", Name: "Intraoral – periapical each additional radiographic image", DWV: 0.30},
-        {Code: "D0240", Name: "Intraoral – occlusal radiographic image", DWV: 0.44},
-        {Code: "D0270", Name: "Bitewing – single radiographic image", DWV: 0.37},
-        {Code: "D0272", Name: "Bitewings – two radiographic images", DWV: 0.55},
-        {Code: "D0273", Name: "Bitewings – three radiographic images", DWV: 0.63},
-        {Code: "D0274", Name: "Bitewings – four radiographic images", DWV: 0.77},
-        {Code: "D0330", Name: "Panoramic radiographic image", DWV: 1.15},
-        {Code: "D1110", Name: "Prophylaxis – adult", DWV: 1.15},
-        {Code: "D1120", Name: "Prophylaxis – child", DWV: 0.84},
-        {Code: "D1206", Name: "Topical application of fluoride varnish", DWV: 0.33},
-        {Code: "D1208", Name: "Topical application of fluoride - excluding varnish", DWV: 0.33},
-        {Code: "D1351", Name: "Sealant - per tooth / Prevention Counseling Proxy", DWV: 0.57},
-        {Code: "D2140", Name: "Amalgam - one surface, primary or permanent", DWV: 1.56},
-        {Code: "D2150", Name: "Amalgam - two surfaces, primary or permanent", DWV: 1.93},
-        {Code: "D2160", Name: "Amalgam - three surfaces, primary or permanent", DWV: 2.29},
-        {Code: "D2161", Name: "Amalgam - four or more surfaces, primary or permanent", DWV: 2.76},
-        {Code: "D2330", Name: "Resin-based composite - one surface, anterior", DWV: 1.68},
-        {Code: "D2331", Name: "Resin-based composite - two surfaces, anterior", DWV: 2.08},
-        {Code: "D2332", Name: "Resin-based composite - three surfaces, anterior", DWV: 2.50},
-        {Code: "D2335", Name: "Resin-based composite - four or more surfaces anterior", DWV: 3.09},
-        {Code: "D2390", Name: "Resin-based composite crown, anterior", DWV: 3.44},
-        {Code: "D2391", Name: "Resin-based composite - one surface, posterior", DWV: 1.82},
-        {Code: "D2392", Name: "Resin-based composite - two surfaces, posterior", DWV: 2.34},
-        {Code: "D2393", Name: "Resin-based composite - three surfaces, posterior", DWV: 2.87},
-        {Code: "D2394", Name: "Resin-based composite - four or more surfaces, posterior", DWV: 3.53},
-        {Code: "D2930", Name: "Prefabricated stainless steel crown - primary tooth", DWV: 2.44},
-        {Code: "D2931", Name: "Prefabricated stainless steel crown - permanent tooth", DWV: 2.68},
-        {Code: "D2940", Name: "Protective restoration / Sealant deployment tracking", DWV: 0.85},
-        {Code: "D2956", Name: "Removal of an indirect restoration on a natural tooth", DWV: 1.93},
-        {Code: "D3220", Name: "Therapeutic pulpotomy (excluding final restoration)", DWV: 1.70},
-        {Code: "D3221", Name: "Pulpal debridement, primary and permanent teeth", DWV: 1.75},
-        {Code: "D3310", Name: "Endodontic therapy, anterior tooth (excl restoration)", DWV: 6.94},
-        {Code: "D3320", Name: "Endodontic therapy, premolar tooth (excl restoration)", DWV: 8.16},
-        {Code: "D3330", Name: "Endodontic therapy, molar tooth (excl restoration)", DWV: 10.37},
-        {Code: "D4341", Name: "Periodontal scaling and root planing - four or more teeth", DWV: 2.11},
-        {Code: "D4342", Name: "Periodontal scaling and root planing - one to three teeth", DWV: 1.48},
-        {Code: "D4346", Name: "Scaling in presence of generalized moderate/severe gingivitis", DWV: 1.15},
-        {Code: "D4355", Name: "Full mouth debridement to enable evaluation", DWV: 1.48},
-        {Code: "D4910", Name: "Periodontal maintenance", DWV: 1.34},
-        {Code: "D5110", Name: "Complete denture - maxillary", DWV: 12.01},
-        {Code: "D5120", Name: "Complete denture - mandibular", DWV: 12.01},
-        {Code: "D5211", Name: "Maxillary partial denture - resin base", DWV: 10.98},
-        {Code: "D5212", Name: "Mandibular partial denture - resin base", DWV: 10.98},
-        {Code: "D5410", Name: "Adjust complete denture - maxillary", DWV: 0.77},
-        {Code: "D5411", Name: "Adjust complete denture - mandibular", DWV: 0.77},
-        {Code: "D6180", Name: "Implant maintenance when full arch hybrid is not removed", DWV: 1.53},
-        {Code: "D6193", Name: "Replacement of an implant screw", DWV: 2.15},
-        {Code: "D7111", Name: "Extraction, coronal remnants - primary tooth", DWV: 1.02},
-        {Code: "D7140", Name: "Extraction, erupted tooth or exposed root", DWV: 1.42},
-        {Code: "D7210", Name: "Extraction, erupted tooth requiring bone removal/sectioning", DWV: 2.54},
-        {Code: "D7220", Name: "Removal of impacted tooth - soft tissue", DWV: 3.16},
-        {Code: "D7230", Name: "Removal of impacted tooth - partially bony", DWV: 4.15},
-        {Code: "D7240", Name: "Removal of impacted tooth - completely bony", DWV: 4.90},
-        {Code: "D7250", Name: "Removal of residual tooth roots (cutting procedure)", DWV: 3.62},
-        {Code: "D7252", Name: "Partial extraction for immediate implant placement", DWV: 4.28},
-        {Code: "D7259", Name: "Nerve dissection isolation surgical procedure", DWV: 9.25},
-        {Code: "D7310", Name: "Alveoloplasty with extractions - four or more teeth quadrant", DWV: 3.57},
-        {Code: "D7311", Name: "Alveoloplasty with extractions - one to three teeth quadrant", DWV: 3.00},
-        {Code: "D7510", Name: "Incision and drainage of abscess - intraoral soft tissue", DWV: 2.56},
-        {Code: "D7511", Name: "Incision and drainage of abscess - intraoral - complicated", DWV: 4.92},
-        {Code: "D7520", Name: "Incision and drainage of abscess - extraoral soft tissue", DWV: 16.60},
-        {Code: "D7910", Name: "Suture of recent small wounds up to 5 cm", DWV: 4.16},
-        {Code: "D7911", Name: "Complicated suture - up to 5 cm", DWV: 14.13},
-        {Code: "D8091", Name: "Comprehensive orthodontic treatment with orthognathic surgery", DWV: 36.18},
-        {Code: "D8671", Name: "Periodic orthodontic treatment visit with orthognathic surgery", DWV: 2.06},
-        {Code: "D8695", Name: "Removal of fixed orthodontic appliances for alternative reasons", DWV: 2.47},
-        {Code: "D9110", Name: "Palliative treatment of dental pain - per visit", DWV: 1.38},
-        {Code: "D9211", Name: "Regional block anesthesia", DWV: 0.62},
-        {Code: "D9215", Name: "Local anesthesia in conjunction with operative procedures", DWV: 0.39},
-        {Code: "D9310", Name: "Consultation – diagnostic service provided by dentist", DWV: 1.47},
-        {Code: "D9630", Name: "Drugs or medicaments dispensed in office for home use", DWV: 0.34},
-        {Code: "D9913", Name: "Administration of neuromodulators", DWV: 2.68},
-        {Code: "D9914", Name: "Administration of dermal fillers", DWV: 3.18},
-        {Code: "D9959", Name: "Unspecified sleep apnea services procedure", DWV: 0.00}
+    let currentUserProfile = null;
+    let isRegisterMode = false;
+    let currentEditingDocId = null; 
+    let currentEncounterData = {}; 
+    let userFavoriteCodes = [];
+    let sortableInstance = null;
+
+    // Explicit 73-Row Ordered Master Matrix
+        const masterRatesMatrix = [
+        {Code: "W9999", Name: "Patient Seating (Encounter)", DWV: 0.00},
+        {Code: "D0120", Name: "Periodic oral evaluation – established patient", DWV: 0.74},
+        {Code: "D0140", Name: "Limited oral evaluation – problem focused", DWV: 1.06},
+        {Code: "D0145", Name: "Oral evaluation for a patient under three years of age and counseling with primary caregiver", DWV: 1.04},
+        {Code: "D0150", Name: "Comprehensive oral evaluation – new or established patient", DWV: 1.22},
+        {Code: "D0160", Name: "Detailed and extensive oral evaluation – problem focused, by report", DWV: 2.05},
+        {Code: "D0171", Name: "Re‐evaluation – post-operative office visit", DWV: 1.07},
+        {Code: "D0180", Name: "Comp perio eval-new/est pat", DWV: 1.35},
+        {Code: "D0190", Name: "Screening of a patient", DWV: 0.59},
+        {Code: "D0210", Name: "Intraoral - comprehensive series of radiographic images", DWV: 1.87},
+        {Code: "D0220", Name: "Intraoral – periapical first radiographic image", DWV: 0.42},
+        {Code: "D0230", Name: "Intraoral – periapical each additional radiographic image", DWV: 0.35},
+        {Code: "D0240", Name: "Intraoral – occlusal radiographic image", DWV: 0.54},
+        {Code: "D0270", Name: "Bitewing – single radiographic image", DWV: 0.43},
+        {Code: "D0272", Name: "Bitewings – two radiographic images", DWV: 0.64},
+        {Code: "D0273", Name: "Bitewings – three radiographic images", DWV: 0.74},
+        {Code: "D0274", Name: "Bitewings – four radiographic images", DWV: 0.88},
+        {Code: "D0330", Name: "Panoramic radiographic image", DWV: 1.59},
+        {Code: "D0999", Name: "Unspecified diagnostic procedure, by report", DWV: 0},
+        {Code: "D1110", Name: "Prophylaxis – adult", DWV: 1.26},
+        {Code: "D1120", Name: "Prophylaxis – child", DWV: 0.97},
+        {Code: "D1206", Name: "Topical application of fluoride varnish", DWV: 0.57},
+        {Code: "D1310", Name: "Nutritional counseling for control of dental disease", DWV: 0.64},
+        {Code: "D1320", Name: "Tobacco counseling for the control and prevention of oral disease", DWV: 0.71},
+        {Code: "D1321", Name: "Counseling for control/prevention of adverse health effects", DWV: 0.63},
+        {Code: "D1330", Name: "Oral hygiene instructions", DWV: 0.78},
+        {Code: "D1351", Name: "Sealant – per tooth", DWV: 0.78},
+        {Code: "D1352", Name: "Preventive resin restoration REMOVED CODE use D2391 instead", DWV: 2.46},
+        {Code: "D1354", Name: "Application of caries arresting medicament - per tooth", DWV: 0.66},
+        {Code: "D2140", Name: "Amalgam – one surface, primary or permanent", DWV: 1.94},
+        {Code: "D2150", Name: "Amalgam – two surfaces, primary or permanent", DWV: 2.31},
+        {Code: "D2160", Name: "Amalgam – three surfaces, primary or permanent", DWV: 2.7},
+        {Code: "D2161", Name: "Amalgam – four or more surfaces, primary or permanent", DWV: 2.98},
+        {Code: "D2330", Name: "Resin-based composite – one surface, anterior", DWV: 2.25},
+        {Code: "D2331", Name: "Resin-based composite – two surfaces, anterior", DWV: 2.73},
+        {Code: "D2332", Name: "Resin-based composite – three surfaces, anterior", DWV: 3.32},
+        {Code: "D2335", Name: "Resin-based composite – 4+ surfaces or involving incisal angle", DWV: 4.05},
+        {Code: "D2391", Name: "Resin-based composite – one surface, posterior", DWV: 2.46},
+        {Code: "D2392", Name: "Resin-based composite – two surfaces, posterior", DWV: 3.11},
+        {Code: "D2393", Name: "Resin-based composite – three surfaces, posterior", DWV: 3.77},
+        {Code: "D2394", Name: "Resin-based composite – four or more surfaces, posterior", DWV: 4.37},
+        {Code: "D2920", Name: "Re-cement or re‐bond crown", DWV: 1.5},
+        {Code: "D2930", Name: "Prefabricated stainless steel crown – primary tooth", DWV: 3.82},
+        {Code: "D2931", Name: "Prefabricated stainless steel crown – permanent tooth", DWV: 4.4},
+        {Code: "D2932", Name: "Prefabricated resin crown", DWV: 4.75},
+        {Code: "D2940", Name: "Protective restoration", DWV: 1.5},
+        {Code: "D2941", Name: "Interim therapeutic restoration – primary dentition", DWV: 1.22},
+        {Code: "D2950", Name: "Core buildup, including any pins when required", DWV: 3.66},
+        {Code: "D3110", Name: "Pulp cap – direct (excluding final restoration)", DWV: 1.04},
+        {Code: "D3120", Name: "Pulp cap – indirect (excluding final restoration)", DWV: 1.1},
+        {Code: "D3220", Name: "Therapeutic pulpotomy (excluding final restoration)", DWV: 2.77},
+        {Code: "D3310", Name: "Endodontic therapy, anterior tooth (excluding final restoration)", DWV: 11.05},
+        {Code: "D4341", Name: "Periodontal scaling and root planing – 4+ teeth per quadrant", DWV: 2.19},
+        {Code: "D4342", Name: "Periodontal scaling and root planing – 1-3 teeth per quadrant", DWV: 2.24},
+        {Code: "D4355", Name: "Full mouth debridement to enable comprehensive evaluation", DWV: 1.96},
+        {Code: "D4920", Name: "Unscheduled dressing change", DWV: 1.48},
+        {Code: "D5410", Name: "Adjust complete denture – maxillary", DWV: 1.16},
+        {Code: "D5411", Name: "Adjust complete denture – mandibular", DWV: 1.15},
+        {Code: "D5421", Name: "Adjust partial denture – maxillary", DWV: 1.11},
+        {Code: "D5422", Name: "Adjust partial denture – mandibular", DWV: 1.09},
+        {Code: "D7111", Name: "Extraction, coronal remnants – primary tooth", DWV: 1.83},
+        {Code: "D7140", Name: "Extraction, erupted tooth or exposed root", DWV: 2.44},
+        {Code: "D7210", Name: "Extraction, erupted tooth requiring removal of bone", DWV: 4.06},
+        {Code: "D7220", Name: "Removal of impacted tooth – soft tissue", DWV: 4.71},
+        {Code: "D7230", Name: "Removal of impacted tooth – partially bony", DWV: 5.71},
+        {Code: "D7240", Name: "Removal of impacted tooth – completely bony", DWV: 6.73},
+        {Code: "D7250", Name: "Removal of residual tooth roots (cutting procedure)", DWV: 4.26},
+        {Code: "D7310", Name: "Alveoloplasty in conjunction with extractions – 4+ teeth", DWV: 4.18},
+        {Code: "D7311", Name: "Alveoloplasty in conjunction with extractions – 1-3 teeth", DWV: 3.47},
+        {Code: "D7510", Name: "Incision and drainage of abscess – intraoral soft tissue", DWV: 3.23},
+        {Code: "D7511", Name: "Incision and drainage of abscess – intraoral – complicated", DWV: 5.65},
+        {Code: "D7520", Name: "Incision and drainage of abscess – extraoral soft tissue", DWV: 14.93},
+        {Code: "D7910", Name: "Suture of recent small wounds up to 5 cm", DWV: 5.37},
+        {Code: "D7911", Name: "Complicated suture – up to 5 cm", DWV: 14.7},
+        {Code: "D8695", Name: "Removal of fixed orthodontic appliances", DWV: 2.69},
+        {Code: "D9110", Name: "Palliative treatment of dental pain - per visit", DWV: 1.56},
+        {Code: "D9211", Name: "Regional block anesthesia", DWV: 0.61},
+        {Code: "D9215", Name: "Local anesthesia in conjunction with operative or surgical", DWV: 0.55},
+        {Code: "D9310", Name: "Consultation – diagnostic service provided by dentist", DWV: 1.79},
+        {Code: "D9630", Name: "Drugs or medicaments dispensed in the office for home use", DWV: 0.39},
+        {Code: "D9910", Name: "Application of desensitizing medicament", DWV: 0.65},
+        {Code: "D9930", Name: "Treatment of complications (post–surgical)", DWV: 1.54},
+        {Code: "D9951", Name: "Occlusal adjustment – limited", DWV: 1.74},
+        {Code: "D9999", Name: "Unspecified adjunctive procedure, by report", DWV: 0}
     ];
 
-    // Execution state configuration structures
-    let activeMissionState = {
-        meta: { missionName: "", siteName: "" },
-        providers: [],
-        activeProviderName: null,
-        logs: []
+const selectableCustomCodes = [
+    {"Code":"D0170","Name":"Re-eval-limited, prob focus","DWV":0.95},
+    {"Code":"D0191","Name":"Assessment of a patient","DWV":0.66},
+    {"Code":"D0250","Name":"Extra-oral 2D projection","DWV":0.79},
+    {"Code":"D0251","Name":"Extra-oral posterior xray image","DWV":0.83},
+    {"Code":"D0277","Name":"Vertical bitewings, 7-8 images","DWV":1.17},
+    {"Code":"D0310","Name":"Sialography","DWV":6.0},
+    {"Code":"D0320","Name":"TMJ arthrogram, incl injection","DWV":10.6},
+    {"Code":"D0321","Name":"Other TMJ images","DWV":1.57},
+    {"Code":"D0322","Name":"Tomographic survey","DWV":8.6},
+    {"Code":"D0340","Name":"Cephalometric image","DWV":1.36},
+    {"Code":"D0350","Name":"2D Oral/Facial photographs","DWV":0.89},
+    {"Code":"D0351","Name":"3D Photographic Image","DWV":0.0},
+    {"Code":"D0360","Name":"Cone beamCT/craniofaciall","DWV":0.0},
+    {"Code":"D0362","Name":"Cone beam-2D multi img","DWV":0.0},
+    {"Code":"D0364","Name":"CBCT, cap/inter, < 1 jaw","DWV":2.3},
+    {"Code":"D0365","Name":"CBCT, cap/inter, mand","DWV":3.23},
+    {"Code":"D0366","Name":"CBCT, cap/inter, maxilla","DWV":3.3},
+    {"Code":"D0367","Name":"CBCT, cap/inter, max and mand","DWV":3.91},
+    {"Code":"D0368","Name":"CBCT, cap/inter, TMJ, 2+","DWV":4.66},
+    {"Code":"D0369","Name":"MRI capture/interpret","DWV":2.8},
+    {"Code":"D0370","Name":"Ultrasound capture/interpret","DWV":1.6},
+    {"Code":"D0371","Name":"Sialoendoscopy cap/inter","DWV":2.53},
+    {"Code":"D0372","Name":"Intraoral tomo-full mouth img","DWV":2.53},
+    {"Code":"D0373","Name":"Intraoral tomo-bitewing radio img","DWV":0.76},
+    {"Code":"D0374","Name":"Intraoral tomo-periapi radio img","DWV":0.36},
+    {"Code":"D0380","Name":"CBCT capture only, < 1 Jaw","DWV":2.39},
+    {"Code":"D0381","Name":"CBCT capture only, mand","DWV":4.01},
+    {"Code":"D0382","Name":"CBCT capture only, maxilla","DWV":3.86},
+    {"Code":"D0383","Name":"CBCT capture only, max and mand","DWV":3.88},
+    {"Code":"D0384","Name":"CBCT capture only, TMJ, 2+","DWV":4.6},
+    {"Code":"D0385","Name":"MRI capture only","DWV":30.7},
+    {"Code":"D0386","Name":"Ultrasound capture only","DWV":7.68},
+    {"Code":"D0387","Name":"Intraoral tomo-FM series-cap only","DWV":1.38},
+    {"Code":"D0388","Name":"Intraoral tomo-bitewing-cap only","DWV":0.43},
+    {"Code":"D0389","Name":"Intraoral tomo-periapi-cap only","DWV":0.2},
+    {"Code":"D0391","Name":"Interpret image, no capture","DWV":1.01},
+    {"Code":"D0393","Name":"Treatment sim. using 3D Imgs","DWV":3.02},
+    {"Code":"D0394","Name":"Digital Subtraction of 2+ Imgs","DWV":1.87},
+    {"Code":"D0395","Name":"3D image fusion","DWV":1.12},
+    {"Code":"D0396","Name":"3D printing of a 3D dental surface scan","DWV":1.31},
+    {"Code":"D0411","Name":"HbA1c in-office testing","DWV":0.76},
+    {"Code":"D0412","Name":"Blood glucose level test","DWV":0.34},
+    {"Code":"D0414","Name":"Lab culture/sens, microbe spec","DWV":0.8},
+    {"Code":"D0415","Name":"Collect microbes for cult/sens","DWV":1.11},
+    {"Code":"D0416","Name":"Viral Culture","DWV":0.86},
+    {"Code":"D0417","Name":"Collect/prep of saliva sample","DWV":1.53},
+    {"Code":"D0418","Name":"Analysis of saliva sample-lab","DWV":1.23},
+    {"Code":"D0419","Name":"Assess saliva flow-measurement","DWV":0.26},
+    {"Code":"D0422","Name":"Genetic sample collection","DWV":0.58},
+    {"Code":"D0423","Name":"Genetic test,  lab analysis","DWV":0.24},
+    {"Code":"D0425","Name":"Caries susceptibility tests","DWV":0.48},
+    {"Code":"D0426","Name":"Saliva sample analysis-POC","DWV":0.91},
+    {"Code":"D0431","Name":"Adjunct test-detect abnormal","DWV":0.48},
+    {"Code":"D0460","Name":"Pulp vitality tests","DWV":0.74},
+    {"Code":"D0461","Name":"Testing for Cracked Tooth","DWV":0.58},
+    {"Code":"D0470","Name":"Diagnostic casts","DWV":1.41},
+    {"Code":"D0472","Name":"Accession of tiss, gr exam/rpt","DWV":1.1},
+    {"Code":"D0473","Name":"Acc of tissue, gr/mic exam/rpt","DWV":2.3},
+    {"Code":"D0474","Name":"Acc of tiss, gr/mic ex/surg mar","DWV":2.65},
+    {"Code":"D0475","Name":"Decalcification Procedure","DWV":1.34},
+    {"Code":"D0476","Name":"Special stains for microorg","DWV":1.39},
+    {"Code":"D0477","Name":"Special stains-not for microorg","DWV":1.86},
+    {"Code":"D0478","Name":"Immunohistochemical stains","DWV":1.7},
+    {"Code":"D0479","Name":"Tissue in-situ hybrid/interpret","DWV":2.6},
+    {"Code":"D0480","Name":"Access/exam exf cytolog smears","DWV":1.6},
+    {"Code":"D0481","Name":"Electron microscopy","DWV":6.0},
+    {"Code":"D0482","Name":"Direct immunofluorescence","DWV":2.0},
+    {"Code":"D0483","Name":"Indirect immunofluorescence","DWV":2.0},
+    {"Code":"D0484","Name":"Consult on slides prp elsewhere","DWV":3.0},
+    {"Code":"D0485","Name":"Consult and prepare slides","DWV":4.14},
+    {"Code":"D0486","Name":"Access trans cytolog, exam/rpt","DWV":1.92},
+    {"Code":"D0502","Name":"Other oral path procedure","DWV":0.92},
+    {"Code":"D0600","Name":"Non-ionizing diagnostic proced","DWV":0.65},
+    {"Code":"D0601","Name":"Caries risk assessment-low","DWV":0.51},
+    {"Code":"D0602","Name":"Caries risk assessment-Moderate","DWV":0.53},
+    {"Code":"D0603","Name":"Caries risk assessment-high","DWV":0.61},
+    {"Code":"D0604","Name":"Antigen testing, public health","DWV":0.24},
+    {"Code":"D0605","Name":"Antibody testing, public health","DWV":0.24},
+    {"Code":"D0606","Name":"Test for public health pathogen","DWV":0.24},
+    {"Code":"D0701","Name":"Pano - image capture only","DWV":0.0},
+    {"Code":"D0702","Name":"2D ceph - image capture only","DWV":0.0},
+    {"Code":"D0703","Name":"2Doral/fac''l photo-capture only","DWV":0.39},
+    {"Code":"D0704","Name":"3D photo image-capture only","DWV":0.0},
+    {"Code":"D0705","Name":"E/O posterior img-capture only","DWV":0.0},
+    {"Code":"D0706","Name":"I/O occlusal-image capture only","DWV":0.0},
+    {"Code":"D0707","Name":"I/O periapical-img capture only","DWV":0.0},
+    {"Code":"D0708","Name":"I/O bitewing-image capture only","DWV":0.0},
+    {"Code":"D0709","Name":"I/O comp ser-image capture only","DWV":0.0},
+    {"Code":"D0801","Name":"3D dental surface scan - direct","DWV":1.33},
+    {"Code":"D0802","Name":"3D dental surface scan - indirect","DWV":3.91},
+    {"Code":"D0803","Name":"3D facial surface scan - direct","DWV":2.45},
+    {"Code":"D0804","Name":"3D facial surface scan - indirect","DWV":1.14},
+    {"Code":"D1208","Name":"Topical Application of Fluoride, Excl Varnish","DWV":0.47},
+    {"Code":"D1301","Name":"Immunization counseling","DWV":1.06},
+    {"Code":"D1353","Name":"Sealant repair - per tooth","DWV":0.59},
+    {"Code":"D1355","Name":"Caries preventive meds-per th","DWV":0.55},
+    {"Code":"D1510","Name":"Space maint-fxd-unilat-per quad","DWV":4.33},
+    {"Code":"D1515","Name":"Space maint-fixed-bilateral","DWV":0.0},
+    {"Code":"D1516","Name":"Space maint-fixed-bilateral,max","DWV":6.28},
+    {"Code":"D1517","Name":"Space maint-fixed-bilaterl,mand","DWV":6.32},
+    {"Code":"D1520","Name":"Space maint-rem-unilat-per quad","DWV":4.4},
+    {"Code":"D1525","Name":"Space maint-remov-bilateral","DWV":0.0},
+    {"Code":"D1526","Name":"Space maint-remov-bilateral,max","DWV":6.52},
+    {"Code":"D1527","Name":"Space maint-remov-bilaterl,mand","DWV":7.15},
+    {"Code":"D1550","Name":"Re-cement/bnd space maint","DWV":0.0},
+    {"Code":"D1551","Name":"Re-cmnt/bnd bilat sp mnt-max","DWV":1.0},
+    {"Code":"D1552","Name":"Re-cmnt/bnd bilat sp mnt-mand","DWV":1.06},
+    {"Code":"D1553","Name":"Re-cmnt/bnd unilat sp mnt-quad","DWV":0.99},
+    {"Code":"D1555","Name":"Remove fixed space maintainer","DWV":0.0},
+    {"Code":"D1556","Name":"Remov fixed unilat sp maint-quad","DWV":0.99},
+    {"Code":"D1557","Name":"Remov fixed bilat sp maint-max","DWV":0.91},
+    {"Code":"D1558","Name":"Remov fixed bilat sp maint-mand","DWV":0.96},
+    {"Code":"D1575","Name":"Sp mnt-fixed-unil,dst shoe-quad","DWV":4.76},
+    {"Code":"D1999","Name":"Unspecified preventive procedure, B/R","DWV":0.0},
+    {"Code":"D2390","Name":"Resin composite crown, anterior","DWV":5.59},
+    {"Code":"D2410","Name":"Gold foil-1 surface","DWV":4.31},
+    {"Code":"D2420","Name":"Gold foil-2 surfaces","DWV":7.19},
+    {"Code":"D2430","Name":"Gold foil-3 surfaces","DWV":12.46},
+    {"Code":"D2510","Name":"Inlay-metallic-1 surface","DWV":11.41},
+    {"Code":"D2520","Name":"Inlay-metallic-2 surfaces","DWV":12.94},
+    {"Code":"D2530","Name":"Inlay-metallic-3+ surfaces","DWV":14.92},
+    {"Code":"D2542","Name":"Onlay-metallic-2 surfaces","DWV":14.44},
+    {"Code":"D2543","Name":"Onlay-metallic-3 surfaces","DWV":15.42},
+    {"Code":"D2544","Name":"Onlay-metallic-4+ surfaces","DWV":15.48},
+    {"Code":"D2610","Name":"Inlay-porc/ceramic-1 surface","DWV":12.98},
+    {"Code":"D2620","Name":"Inlay-porc/ceramic-2 surfaces","DWV":12.17},
+    {"Code":"D2630","Name":"Inlay-porc/ceramic-3+ surfaces","DWV":13.47},
+    {"Code":"D2642","Name":"Onlay-porc/ceram-2 surfaces","DWV":15.33},
+    {"Code":"D2643","Name":"Onlay-porc/ceram-3 surfaces","DWV":15.88},
+    {"Code":"D2644","Name":"Onlay-porc/ceram-4 + surfaces","DWV":15.78},
+    {"Code":"D2650","Name":"Inlay-resin-1 surface","DWV":8.82},
+    {"Code":"D2651","Name":"Inlay-resin-2 surfaces","DWV":10.51},
+    {"Code":"D2652","Name":"Inlay-resin-3+ surfaces","DWV":11.04},
+    {"Code":"D2662","Name":"Onlay-resin-2 surfaces","DWV":9.59},
+    {"Code":"D2663","Name":"Onlay-resin-3 surfaces","DWV":11.01},
+    {"Code":"D2664","Name":"Onlay-resin-4+ surfaces","DWV":11.73},
+    {"Code":"D2710","Name":"Crown-resin (indirect)","DWV":6.77},
+    {"Code":"D2712","Name":"Crown-3/4 resin (indirect)","DWV":6.81},
+    {"Code":"D2720","Name":"Crown-resin w/high noble metal","DWV":16.78},
+    {"Code":"D2721","Name":"Crown-resin with base metal","DWV":15.72},
+    {"Code":"D2722","Name":"Crown-resin with noble metal","DWV":16.07},
+    {"Code":"D2740","Name":"Crown-porcelain/ceramic","DWV":15.69},
+    {"Code":"D2750","Name":"Crown-porc fuse high noble mtl","DWV":14.2},
+    {"Code":"D2751","Name":"Crown-porc fused to base metal","DWV":12.91},
+    {"Code":"D2752","Name":"Crown-porc fused noble metal","DWV":13.72},
+    {"Code":"D2753","Name":"Crown-porc fused to titanium","DWV":15.32},
+    {"Code":"D2780","Name":"Crown-3/4 cast high noble metal","DWV":15.92},
+    {"Code":"D2781","Name":"Crown-3/4 cast base metal","DWV":15.34},
+    {"Code":"D2782","Name":"Crown-3/4 cast noble metal","DWV":15.84},
+    {"Code":"D2783","Name":"Crown-3/4 porcelain/ceramic","DWV":16.06},
+    {"Code":"D2790","Name":"Crown-full cast high noble mtl","DWV":15.81},
+    {"Code":"D2791","Name":"Crown-full cast base metal","DWV":14.51},
+    {"Code":"D2792","Name":"Crown-full cast noble metal","DWV":15.39},
+    {"Code":"D2794","Name":"Crown-titanium &titanium alloys","DWV":17.9},
+    {"Code":"D2799","Name":"Provisional crown","DWV":4.86},
+    {"Code":"D2910","Name":"Recement/bnd inlay/onlay/ven","DWV":1.62},
+    {"Code":"D2915","Name":"Recemnt/bnd post and core","DWV":1.31},
+    {"Code":"D2921","Name":"Reattach tooth frag, incsl/cusp","DWV":2.45},
+    {"Code":"D2928","Name":"Prefab Porcelain/C Crown-Perm","DWV":5.0},
+    {"Code":"D2929","Name":"Prefab porc/ceram crown-prim","DWV":5.12},
+    {"Code":"D2933","Name":"Prefab SS crown, resin window","DWV":5.05},
+    {"Code":"D2934","Name":"Prefab esthetic SS crown-prim","DWV":4.88},
+    {"Code":"D2949","Name":"Foundation for Indirect Rest","DWV":2.23},
+    {"Code":"D2951","Name":"Pin retention/tooth","DWV":0.8},
+    {"Code":"D2952","Name":"Post and core, cast","DWV":4.89},
+    {"Code":"D2953","Name":"Add'l cast post-same tooth","DWV":2.88},
+    {"Code":"D2954","Name":"Post and core, prefabricated","DWV":4.29},
+    {"Code":"D2955","Name":"Post removal (not with endo)","DWV":3.64},
+    {"Code":"D2956","Name":"Removal indir rest natural tooth","DWV":2.1},
+    {"Code":"D2957","Name":"Add'l prefab post-same tooth","DWV":2.22},
+    {"Code":"D2960","Name":"Labial veneer (resin)-chairside","DWV":8.69},
+    {"Code":"D2961","Name":"Labial veneer (resin)-indirect","DWV":12.9},
+    {"Code":"D2962","Name":"Labial veneer (porcelain)-indirect","DWV":16.34},
+    {"Code":"D2971","Name":"Add'l prc-new crn undr exs dent","DWV":2.29},
+    {"Code":"D2975","Name":"Coping","DWV":6.35},
+    {"Code":"D2976","Name":"Band stabilization - per tooth","DWV":4.41},
+    {"Code":"D2980","Name":"Crown repair, material fail","DWV":3.39},
+    {"Code":"D2981","Name":"Inlay Repair, Material Failure","DWV":2.68},
+    {"Code":"D2982","Name":"Onlay Repair, Material Failure","DWV":2.68},
+    {"Code":"D2983","Name":"Veneer Repair, Material Failure","DWV":2.59},
+    {"Code":"D2989","Name":"Excavation with non-restorability diagnosis","DWV":1.78},
+    {"Code":"D2990","Name":"Resin infiltration-incipient","DWV":1.28},
+    {"Code":"D2991","Name":"App of regenerative material to restore per t","DWV":2.34},
+    {"Code":"D2999","Name":"Unspecified restorative proced","DWV":0.0},
+    {"Code":"D3221","Name":"Pulpal debridement-prim/perm","DWV":3.25},
+    {"Code":"D3222","Name":"Partial pulpototomy apexogen","DWV":2.85},
+    {"Code":"D3230","Name":"Pulpal therapy-ant, primary","DWV":2.98},
+    {"Code":"D3240","Name":"Pulpal therapy-post, primary","DWV":3.61},
+    {"Code":"D3320","Name":"Endodontic therapy-premolar(ex rest","DWV":12.64},
+    {"Code":"D3330","Name":"Endodontic therapy-molar (ex rest)","DWV":15.58},
+    {"Code":"D3331","Name":"Treatment of root canal obstruct","DWV":6.92},
+    {"Code":"D3332","Name":"Incomplete endodontic therapy","DWV":6.0},
+    {"Code":"D3333","Name":"Int root repair of perf defects","DWV":3.87},
+    {"Code":"D3346","Name":"Retreat, prev RCT-anterior","DWV":14.0},
+    {"Code":"D3347","Name":"Retreat, prev RCT-premolar","DWV":15.58},
+    {"Code":"D3348","Name":"Retreat, prev RCT-molar","DWV":18.32},
+    {"Code":"D3351","Name":"Apexification/recalcif, initial","DWV":5.78},
+    {"Code":"D3352","Name":"Apexification/recalcif, interim","DWV":2.78},
+    {"Code":"D3353","Name":"Apexification/recalcif, final","DWV":8.25},
+    {"Code":"D3355","Name":"Pulpal regeneration-initial","DWV":5.98},
+    {"Code":"D3356","Name":"Pulpal regeneration-interim","DWV":2.68},
+    {"Code":"D3357","Name":"Pulpal regeneration-complete","DWV":4.29},
+    {"Code":"D3410","Name":"Apicoectomy surg-anterior","DWV":12.57},
+    {"Code":"D3421","Name":"Apicoectomy surg-bicusp, 1st rt","DWV":14.25},
+    {"Code":"D3425","Name":"Apicoectomy/Periradicular surg-molar/1st root","DWV":15.4},
+    {"Code":"D3426","Name":"Apicoectomy-each add'l root","DWV":4.82},
+    {"Code":"D3427","Name":"Periradicular sx, w/o apico","DWV":0.0},
+    {"Code":"D3428","Name":"Bone Graft w/Periradicular surg 1 Site","DWV":8.03},
+    {"Code":"D3429","Name":"Bone Graft w/Periradicular surg each add th","DWV":14.92},
+    {"Code":"D3430","Name":"Retrograde filling-per root","DWV":3.29},
+    {"Code":"D3431","Name":"Biologic Material to aid Reg w/Prdc Srg","DWV":17.61},
+    {"Code":"D3432","Name":"Guided Tissue Rgn Per Site w/Prd Srg","DWV":9.0},
+    {"Code":"D3450","Name":"Root amputation-per root","DWV":7.77},
+    {"Code":"D3460","Name":"Endodontic endosseous implant","DWV":28.89},
+    {"Code":"D3470","Name":"Intentional re-implant w/splint","DWV":14.76},
+    {"Code":"D3471","Name":"Surg rep, root resorption-anterior","DWV":8.28},
+    {"Code":"D3472","Name":"Surg rep, root resorption-premolar","DWV":13.45},
+    {"Code":"D3473","Name":"Surg rep, root resorption-molar","DWV":3.02},
+    {"Code":"D3501","Name":"Surg exposure, rt surf-anterior","DWV":8.88},
+    {"Code":"D3502","Name":"Surg exposure, rt surf-premolar","DWV":9.08},
+    {"Code":"D3503","Name":"Surg exposure, rt surf-molar","DWV":6.93},
+    {"Code":"D3910","Name":"Surgery to isolate w/rubber dam","DWV":2.58},
+    {"Code":"D3911","Name":"Intraorifice barrier","DWV":0.66},
+    {"Code":"D3920","Name":"Hemisection, no root canal therapy","DWV":5.88},
+    {"Code":"D3921","Name":"Decoronat/submerg, erupted th","DWV":6.05},
+    {"Code":"D3950","Name":"Canal prep/fit of dowel/post","DWV":2.86},
+    {"Code":"D3999","Name":"Unspecified endo procedure","DWV":0.0},
+    {"Code":"D4210","Name":"Gingivectomy, 4+/quadrant","DWV":8.1},
+    {"Code":"D4211","Name":"Gingivectomy, 1-3/quadrant","DWV":3.5},
+    {"Code":"D4212","Name":"Gingivectomy, to restore","DWV":3.31},
+    {"Code":"D4230","Name":"Crown exposure, 4+ per quad","DWV":10.86},
+    {"Code":"D4231","Name":"Crown exposure, 1-3 per quad","DWV":5.88},
+    {"Code":"D4240","Name":"Gingival flap,root pln, 4+ per quad","DWV":12.11},
+    {"Code":"D4241","Name":"Gingival flap rt pln 1-3 per quad","DWV":8.0},
+    {"Code":"D4245","Name":"Apically positioned flap","DWV":8.12},
+    {"Code":"D4249","Name":"Clinic crown lengthening-hard tissue","DWV":10.07},
+    {"Code":"D4260","Name":"Osseous surgery, 4+/quad","DWV":17.3},
+    {"Code":"D4261","Name":"Osseous surgery, 1-3/quad","DWV":12.75},
+    {"Code":"D4263","Name":"Bone replace graft-1st site/qu","DWV":7.54},
+    {"Code":"D4264","Name":"Bone replace graft-each add/qu","DWV":6.01},
+    {"Code":"D4265","Name":"Bio mat, sft&osseous tiss regen","DWV":5.32},
+    {"Code":"D4266","Name":"GTR, resorbable, per site","DWV":7.25},
+    {"Code":"D4267","Name":"GTR, nonresorbable, per site","DWV":6.67},
+    {"Code":"D4268","Name":"Surg revision proc, per tooth","DWV":3.57},
+    {"Code":"D4270","Name":"Pedicle soft tissue graft proc","DWV":10.18},
+    {"Code":"D4271","Name":"Free soft tissue graft","DWV":0.0},
+    {"Code":"D4273","Name":"Auto-CT graft, first tooth","DWV":15.42},
+    {"Code":"D4274","Name":"Mesial/distal wedge procedure","DWV":8.97},
+    {"Code":"D4275","Name":"Non-auto-CT graft, first tooth","DWV":14.56},
+    {"Code":"D4276","Name":"Comb CT and dbl ped graft/tooth","DWV":15.77},
+    {"Code":"D4277","Name":"Free Soft Tiss Graft, 1st Tooth","DWV":14.56},
+    {"Code":"D4278","Name":"Free soft tiss graft, add'l","DWV":8.32},
+    {"Code":"D4283","Name":"Auto-CT Graft, add'l tooth","DWV":10.35},
+    {"Code":"D4285","Name":"Non-auto-CT graft, add'l","DWV":9.25},
+    {"Code":"D4286","Name":"Removal of non-resorbable barrier","DWV":2.09},
+    {"Code":"D4320","Name":"Provisional splinting-intracor","DWV":0.0},
+    {"Code":"D4321","Name":"Provisional splinting-extracor","DWV":0.0},
+    {"Code":"D4322","Name":"Splint - intra-coronal","DWV":3.44},
+    {"Code":"D4323","Name":"Splint - extra-coronal","DWV":2.65},
+    {"Code":"D4346","Name":"Scale, gingival inflam-full mth","DWV":0.97},
+    {"Code":"D4381","Name":"Local delivery antimicrobial agent-tooth, B/R","DWV":1.48},
+    {"Code":"D4910","Name":"Periodontal maintenance","DWV":0.53},
+    {"Code":"D4921","Name":"Gingival irrigation/quadrant","DWV":0.53},
+    {"Code":"D4999","Name":"Unspecified perio procedure","DWV":0.0},
+    {"Code":"D5110","Name":"Complete denture-maxillary","DWV":19.64},
+    {"Code":"D5120","Name":"Complete denture-mandibular","DWV":19.38},
+    {"Code":"D5130","Name":"Immediate denture-maxillary","DWV":20.38},
+    {"Code":"D5140","Name":"Immediate denture-mandibular","DWV":19.61},
+    {"Code":"D5211","Name":"Maxillary partial-resin base","DWV":15.48},
+    {"Code":"D5212","Name":"Mandibular partial-resin base","DWV":15.52},
+    {"Code":"D5213","Name":"Maxil partl-cast metal w/resin","DWV":20.99},
+    {"Code":"D5214","Name":"Mand partl-cast metal w/resin","DWV":21.34},
+    {"Code":"D5221","Name":"Immed maxil partl dent w/resin","DWV":12.13},
+    {"Code":"D5222","Name":"Immed mand partl dent w/resin","DWV":14.12},
+    {"Code":"D5223","Name":"Imd Max part-cast metl w/resin","DWV":22.97},
+    {"Code":"D5224","Name":"Imd Mand part-cast metl w/resin","DWV":22.87},
+    {"Code":"D5225","Name":"Maxil partial-flex base incl cl","DWV":19.71},
+    {"Code":"D5226","Name":"Mand partial-flex base incl cl","DWV":19.77},
+    {"Code":"D5227","Name":"Imd maxil partl-flexible base","DWV":17.18},
+    {"Code":"D5228","Name":"Imd mand partial-flexible base","DWV":17.18},
+    {"Code":"D5281","Name":"Removable unilat part denture","DWV":0.0},
+    {"Code":"D5282","Name":"Removable PD-unilat, cast, max","DWV":10.84},
+    {"Code":"D5283","Name":"Remove unilat part denture-mand","DWV":12.26},
+    {"Code":"D5284","Name":"Remov unil part dentr-flex-quad","DWV":10.53},
+    {"Code":"D5286","Name":"Remov unil part dent-resin-quad","DWV":9.79},
+    {"Code":"D5400","Name":"ADJ DENT, FULL/ PART","DWV":0.0},
+    {"Code":"D5510","Name":"Repair complete denture base","DWV":0.0},
+    {"Code":"D5511","Name":"Repair comp denture base-mand","DWV":2.72},
+    {"Code":"D5512","Name":"Repair comp denture base-max","DWV":2.8},
+    {"Code":"D5520","Name":"Replace teeth-comp dent-per th","DWV":2.13},
+    {"Code":"D5610","Name":"Repair partial - resin base","DWV":0.0},
+    {"Code":"D5611","Name":"Repair res part dent base-mand","DWV":2.56},
+    {"Code":"D5612","Name":"Repair res part dent base-max","DWV":2.56},
+    {"Code":"D5620","Name":"Repair partial - cast frmwk","DWV":0.0},
+    {"Code":"D5621","Name":"Repair cast partial frmwk-mand","DWV":2.55},
+    {"Code":"D5622","Name":"Repair cast partial frmwk-max","DWV":2.82},
+    {"Code":"D5630","Name":"Repair or replace broken clasp, per tooth","DWV":2.93},
+    {"Code":"D5640","Name":"Replace teeth-partial dent-per th","DWV":2.34},
+    {"Code":"D5650","Name":"Add tooth to exist part dent-per th","DWV":2.85},
+    {"Code":"D5660","Name":"Add clasp to exist part denture, per tooth","DWV":3.03},
+    {"Code":"D5670","Name":"Replace all teeth & acrylic-maxil","DWV":7.99},
+    {"Code":"D5671","Name":"Replace all teeth & acrylic-mand","DWV":7.99},
+    {"Code":"D5710","Name":"Rebase complete denture-max","DWV":7.46},
+    {"Code":"D5711","Name":"Rebase complete denture-mand","DWV":7.72},
+    {"Code":"D5720","Name":"Rebase partial denture-max","DWV":7.47},
+    {"Code":"D5721","Name":"Rebase partial denture-mand","DWV":7.47},
+    {"Code":"D5725","Name":"Rebase hybrid prosthesis","DWV":6.92},
+    {"Code":"D5730","Name":"Reline complete maxillary denture-direct","DWV":4.53},
+    {"Code":"D5731","Name":"Reline complete mandibular denture-direct","DWV":4.48},
+    {"Code":"D5740","Name":"Reline maxillary partial denture-direct","DWV":3.85},
+    {"Code":"D5741","Name":"Reline mandibular partial denture-direct","DWV":3.91},
+    {"Code":"D5750","Name":"Reline complete maxillary denture-indirect","DWV":5.63},
+    {"Code":"D5751","Name":"Reline complete mandibular denture-indirect","DWV":5.62},
+    {"Code":"D5760","Name":"Reline maxillary partial denture-indirect","DWV":5.12},
+    {"Code":"D5761","Name":"Reline mandibular partial denture-indirect","DWV":5.21},
+    {"Code":"D5765","Name":"Soft liner, removal denture-indirect","DWV":6.33},
+    {"Code":"D5810","Name":"Interim comp denture-max","DWV":9.41},
+    {"Code":"D5811","Name":"Interim comp denture-mand","DWV":9.37},
+    {"Code":"D5820","Name":"Interim partial denture-max","DWV":8.66},
+    {"Code":"D5821","Name":"Interim partial denture-mand","DWV":9.18},
+    {"Code":"D5850","Name":"Tissue condition, maxillary","DWV":2.37},
+    {"Code":"D5851","Name":"Tissue condition, mandibular","DWV":2.16},
+    {"Code":"D5862","Name":"Precision attachment","DWV":7.51},
+    {"Code":"D5863","Name":"Overdenture - Complete Max","DWV":22.59},
+    {"Code":"D5864","Name":"Overdenture - Partial Max","DWV":27.79},
+    {"Code":"D5865","Name":"Overdenture - Complete Mand","DWV":23.64},
+    {"Code":"D5866","Name":"Overdenture - Partial Mand","DWV":28.88},
+    {"Code":"D5867","Name":"Replcmt prec attachmt-part/full","DWV":1.43},
+    {"Code":"D5875","Name":"Mod remov pros-post implant sx","DWV":4.19},
+    {"Code":"D5876","Name":"Add metal sub to comp dent-per arch","DWV":20.57},
+    {"Code":"D5877","Name":"Dup of complete denture-max","DWV":6.93},
+    {"Code":"D5878","Name":"Dup of complete denture-man","DWV":6.93},
+    {"Code":"D5899","Name":"Unspecified removable prosthodontic proc, B/R","DWV":0.0},
+    {"Code":"D5909","Name":"Max guidance prosthesis w/ flange","DWV":64.9},
+    {"Code":"D5911","Name":"Facial moulage (sectional)","DWV":2.52},
+    {"Code":"D5912","Name":"Facial moulage (complete)","DWV":2.52},
+    {"Code":"D5913","Name":"Nasal prosthesis","DWV":53.11},
+    {"Code":"D5914","Name":"Auricular prosthesis","DWV":53.11},
+    {"Code":"D5915","Name":"Orbital prosthesis","DWV":71.88},
+    {"Code":"D5916","Name":"Ocular prosthesis","DWV":19.17},
+    {"Code":"D5919","Name":"Facial prosthesis","DWV":70.25},
+    {"Code":"D5922","Name":"Nasal septal prosthesis","DWV":44.69},
+    {"Code":"D5923","Name":"Ocular prosthesis, interim","DWV":17.51},
+    {"Code":"D5924","Name":"Cranial prosthesis","DWV":17.51},
+    {"Code":"D5925","Name":"Facial augment implant prosth","DWV":21.87},
+    {"Code":"D5926","Name":"Nasal prosthesis, replacement","DWV":41.01},
+    {"Code":"D5927","Name":"Auricular prosthesis, replace","DWV":44.69},
+    {"Code":"D5928","Name":"Orbital prosthesis, replacement","DWV":60.38},
+    {"Code":"D5929","Name":"Facial prosthesis, replacement","DWV":64.45},
+    {"Code":"D5930","Name":"Max guidance prosthesis w/o flange","DWV":56.47},
+    {"Code":"D5931","Name":"Obturator prosthesis, surgical","DWV":28.6},
+    {"Code":"D5932","Name":"Obturator prosthesis,definitive","DWV":53.49},
+    {"Code":"D5933","Name":"Obturator prosthesis, modificat","DWV":2.53},
+    {"Code":"D5934","Name":"Mandibular guide prosth w/ flange","DWV":48.75},
+    {"Code":"D5935","Name":"Mandibular guide prosth w/o flange","DWV":42.42},
+    {"Code":"D5936","Name":"Obturator prosthesis, interim","DWV":47.64},
+    {"Code":"D5937","Name":"Trismus appliance (not TMD)","DWV":5.99},
+    {"Code":"D5938","Name":"Resection prosth-complete rem, max","DWV":74.0},
+    {"Code":"D5939","Name":"Resection prosth-complete rem, man","DWV":68.0},
+    {"Code":"D5940","Name":"Resection prosth, partial rem-max","DWV":71.0},
+    {"Code":"D5941","Name":"Resection prosth, partial rem-man","DWV":65.0},
+    {"Code":"D5942","Name":"Resection prosth-impl/abut rem, Mx","DWV":71.4},
+    {"Code":"D5943","Name":"Resection prosth-impl/abut rem, Mn","DWV":68.4},
+    {"Code":"D5944","Name":"Res prosth-impl/abut part rem, Mx","DWV":61.23},
+    {"Code":"D5945","Name":"Res prosth-impl/abut part rem, Mn","DWV":58.9},
+    {"Code":"D5946","Name":"Res prosth-impl/abut sup fixd, Mx","DWV":79.85},
+    {"Code":"D5947","Name":"Res prosth-impl/abut sup fixd, Mn","DWV":81.17},
+    {"Code":"D5948","Name":"Res prosth-impl/abut partial, Mx","DWV":65.0},
+    {"Code":"D5949","Name":"Res prosth-impl/abut partial, Mn","DWV":58.0},
+    {"Code":"D5951","Name":"Feeding aid","DWV":7.78},
+    {"Code":"D5952","Name":"Speech aid prosthesis,pediatric","DWV":25.28},
+    {"Code":"D5953","Name":"Speech aid prosthesis, adult","DWV":48.01},
+    {"Code":"D5954","Name":"Palatal augmentation prosthesis","DWV":44.49},
+    {"Code":"D5955","Name":"Palatal lift prosth, definitive","DWV":41.15},
+    {"Code":"D5958","Name":"Palatal lift prosthesis,interim","DWV":47.74},
+    {"Code":"D5959","Name":"Palatal lift prosth, modificat","DWV":4.15},
+    {"Code":"D5960","Name":"Speech aid prosth, modification","DWV":4.15},
+    {"Code":"D5982","Name":"Surgical stent","DWV":4.27},
+    {"Code":"D5983","Name":"Radiation carrier","DWV":9.07},
+    {"Code":"D5984","Name":"Radiation shield","DWV":9.07},
+    {"Code":"D5985","Name":"Radiation cone locator","DWV":9.07},
+    {"Code":"D5986","Name":"Fluoride gel carrier","DWV":1.53},
+    {"Code":"D5987","Name":"Commissure splint","DWV":13.61},
+    {"Code":"D5988","Name":"Surgical splint","DWV":2.86},
+    {"Code":"D5991","Name":"Vesiculobullous med carrier","DWV":1.04},
+    {"Code":"D5992","Name":"Adjust MF prosthesis","DWV":2.67},
+    {"Code":"D5993","Name":"Maint/Clean MF prosthesis","DWV":5.07},
+    {"Code":"D5994","Name":"Periodontal medicament carrier","DWV":0.0},
+    {"Code":"D5995","Name":"Perio med carrier,seal,lab-max","DWV":6.45},
+    {"Code":"D5996","Name":"Perio med carrier,seal,lab-mnd","DWV":6.45},
+    {"Code":"D5999","Name":"Unspecified maxillofacial pros","DWV":0.0},
+    {"Code":"D6010","Name":"Surgical placement of implant: endosteal","DWV":26.67},
+    {"Code":"D6011","Name":"Second stage implant surgery","DWV":4.37},
+    {"Code":"D6012","Name":"Sx place interim endost implant","DWV":32.72},
+    {"Code":"D6013","Name":"Sx placement of mini implant","DWV":27.42},
+    {"Code":"D6040","Name":"Surgic place: eposteal implant","DWV":111.92},
+    {"Code":"D6049","Name":"Scaling of implant with peri-implantitis","DWV":1.97},
+    {"Code":"D6050","Name":"Sx placemnt transosteal implant","DWV":88.9},
+    {"Code":"D6051","Name":"Interim Abutment","DWV":5.42},
+    {"Code":"D6052","Name":"Semi-precision attchmt abutment","DWV":0.0},
+    {"Code":"D6055","Name":"Connect bar-imp/abt supported","DWV":10.45},
+    {"Code":"D6056","Name":"Prefab abutment-incl mod/plac","DWV":8.47},
+    {"Code":"D6057","Name":"Custom abutment-incl placement","DWV":11.06},
+    {"Code":"D6058","Name":"Abut supported crown-porc/cer","DWV":18.28},
+    {"Code":"D6059","Name":"Abut supp crown-porc/high noble","DWV":18.07},
+    {"Code":"D6060","Name":"Abut supp crown-porc/base metal","DWV":16.64},
+    {"Code":"D6061","Name":"Abut supp crown-porc/noble","DWV":17.62},
+    {"Code":"D6062","Name":"Abut supp crown-high noble","DWV":18.37},
+    {"Code":"D6063","Name":"Abut supp crown-base metal","DWV":16.67},
+    {"Code":"D6064","Name":"Abut supp crown-noble metal","DWV":17.6},
+    {"Code":"D6065","Name":"Implant supp porc/cer crown","DWV":19.28},
+    {"Code":"D6066","Name":"Impl supp porc fused hi-nob crn","DWV":18.84},
+    {"Code":"D6067","Name":"Impl supp hi-nob alloy crown","DWV":18.29},
+    {"Code":"D6068","Name":"Abut sup retainer-porc/ceramic","DWV":17.71},
+    {"Code":"D6069","Name":"Abut sup retainer-porc/hi noble","DWV":18.46},
+    {"Code":"D6070","Name":"Abut sup retainer-porc/base mtl","DWV":18.59},
+    {"Code":"D6071","Name":"Abut sup retainer-porc/noble","DWV":19.03},
+    {"Code":"D6072","Name":"Abut sup retainer-high nble mtl","DWV":19.2},
+    {"Code":"D6073","Name":"Abut sup retainer-base metal","DWV":17.53},
+    {"Code":"D6074","Name":"Abut sup retainer-noble metal","DWV":18.63},
+    {"Code":"D6075","Name":"Implant sup retainer-ceramic","DWV":18.29},
+    {"Code":"D6076","Name":"Implnt supp ret-prc fuse mtlFPD","DWV":18.44},
+    {"Code":"D6077","Name":"Implant supp ret-cast metal FPD","DWV":18.54},
+    {"Code":"D6080","Name":"Implant maintenance procedures","DWV":2.51},
+    {"Code":"D6081","Name":"Scale/debride implant, no flap","DWV":1.91},
+    {"Code":"D6082","Name":"Implnt sup crn-prc -base alloys","DWV":19.1},
+    {"Code":"D6083","Name":"Implnt sup crn-prc-noble alloys","DWV":19.67},
+    {"Code":"D6084","Name":"Implnt sup crn-prc-titanium","DWV":18.69},
+    {"Code":"D6085","Name":"Provisional implant crown","DWV":6.02},
+    {"Code":"D6086","Name":"Implant supp crown-base alloys","DWV":18.54},
+    {"Code":"D6087","Name":"Implant supp crown-noble alloys","DWV":18.54},
+    {"Code":"D6088","Name":"Implant supp crown-titanium","DWV":18.54},
+    {"Code":"D6089","Name":"Accessing/retorquing loose implant screw-per","DWV":1.55},
+    {"Code":"D6090","Name":"Repair implant/abutment sup prosth","DWV":4.39},
+    {"Code":"D6091","Name":"Replace atchmt-imp/abt sup pros","DWV":2.21},
+    {"Code":"D6092","Name":"Recement/bnd imp/abut sup crwn","DWV":1.8},
+    {"Code":"D6093","Name":"Recement/bnd impl/abut sup FPD","DWV":2.39},
+    {"Code":"D6094","Name":"Abutment supp crown - titanium","DWV":16.22},
+    {"Code":"D6095","Name":"Repair implant abutment","DWV":4.57},
+    {"Code":"D6096","Name":"Remove brkn implant ret screw","DWV":3.6},
+    {"Code":"D6097","Name":"Abut sup crown-prc fus-titanium","DWV":19.15},
+    {"Code":"D6098","Name":"Imp sup retainer-prc fuse-base","DWV":18.59},
+    {"Code":"D6099","Name":"Imp sup retn,FPD-prc fus-noble","DWV":18.97},
+    {"Code":"D6100","Name":"Implant removal","DWV":8.12},
+    {"Code":"D6101","Name":"Debride Peri-Implant Defect","DWV":7.62},
+    {"Code":"D6102","Name":"Debride/Oss Peri-Implant Defect","DWV":10.63},
+    {"Code":"D6103","Name":"Bone Graft Rep Peri-Imp Defect","DWV":7.8},
+    {"Code":"D6104","Name":"Bone graft at implant placement","DWV":7.87},
+    {"Code":"D6105","Name":"Rmvl impt bdy nt requr bone rmvl or flap elev","DWV":2.74},
+    {"Code":"D6106","Name":"Guided tiss regen-resorb barrier, per implt","DWV":7.83},
+    {"Code":"D6107","Name":"Guided tiss regen-nonresorb bar, per implt","DWV":8.05},
+    {"Code":"D6110","Name":"Imp/abt sup RD-ednt max","DWV":29.06},
+    {"Code":"D6111","Name":"Imp/abt sup RD-ednt mand","DWV":27.69},
+    {"Code":"D6112","Name":"Imp/abt sup RD-part-ednt max","DWV":25.86},
+    {"Code":"D6113","Name":"Imp/abt sup RD-part-ednt mand","DWV":26.11},
+    {"Code":"D6114","Name":"Imp/abt sup FD-ednt max","DWV":83.47},
+    {"Code":"D6115","Name":"Imp/abt sup FD-ednt mand","DWV":91.9},
+    {"Code":"D6116","Name":"Imp/abt sup FD-part-ednt max","DWV":34.73},
+    {"Code":"D6117","Name":"Imp/abt sup FD-part-ednt mand","DWV":34.73},
+    {"Code":"D6118","Name":"Imp/abt sup int FD-ednt mand","DWV":28.57},
+    {"Code":"D6119","Name":"Imp/abt sup int FD-ednt max","DWV":29.78},
+    {"Code":"D6120","Name":"Imp sup ret-prc fuse-titanium","DWV":18.59},
+    {"Code":"D6121","Name":"Imp sup ret,metal FPD-base","DWV":17.53},
+    {"Code":"D6122","Name":"Imp sup ret,metal FPD-noble","DWV":18.63},
+    {"Code":"D6123","Name":"Imp sup ret,metal FPD-titanium","DWV":17.53},
+    {"Code":"D6180","Name":"Imp main full arch fxd hybrd prosth","DWV":1.67},
+    {"Code":"D6190","Name":"Radiograph/surg implant index","DWV":4.76},
+    {"Code":"D6191","Name":"Place semi-precision abutment","DWV":9.0},
+    {"Code":"D6192","Name":"Place semi-precision attachment","DWV":8.24},
+    {"Code":"D6193","Name":"Replacement of implant screw","DWV":2.34},
+    {"Code":"D6194","Name":"Abut sup ret-crwn for FPD-titan","DWV":16.08},
+    {"Code":"D6195","Name":"Abut sup ret-prc fus-titanium","DWV":18.93},
+    {"Code":"D6196","Name":"Remvl indr restor implt retnd abut","DWV":2.3},
+    {"Code":"D6197","Name":"Rep rest opn screw-rtned implt pros, per impl","DWV":2.15},
+    {"Code":"D6198","Name":"Remv interim implant component","DWV":0.66},
+    {"Code":"D6199","Name":"Unspecified implant procedure, B/R","DWV":0.0},
+    {"Code":"D6205","Name":"Pontic-indirect resin composite","DWV":8.41},
+    {"Code":"D6210","Name":"Pontic-cast high noble metal","DWV":13.6},
+    {"Code":"D6211","Name":"Pontic-predominantly base metal","DWV":12.62},
+    {"Code":"D6212","Name":"Pontic-cast noble metal","DWV":13.4},
+    {"Code":"D6214","Name":"Pontic-titanium&titanium alloys","DWV":13.79},
+    {"Code":"D6240","Name":"Pontic-porc/high noble metal","DWV":14.27},
+    {"Code":"D6241","Name":"Pontic-porcelain/base metal","DWV":12.34},
+    {"Code":"D6242","Name":"Pontic-porcelain/noble metal","DWV":13.15},
+    {"Code":"D6243","Name":"Pontic-porcelain fused-titanium","DWV":12.5},
+    {"Code":"D6245","Name":"Pontic-porcelain/ceramic","DWV":15.24},
+    {"Code":"D6250","Name":"Pontic-resin w/ high noble met","DWV":12.95},
+    {"Code":"D6251","Name":"Pontic-resin with base metal","DWV":11.87},
+    {"Code":"D6252","Name":"Pontic-resin with noble metal","DWV":12.72},
+    {"Code":"D6253","Name":"Provisional pontic","DWV":5.77},
+    {"Code":"D6254","Name":"Interim Pontic","DWV":0.0},
+    {"Code":"D6280","Name":"Implnt dent full arch maint/arch","DWV":3.67},
+    {"Code":"D6545","Name":"Retainer-cast for resin bonded","DWV":6.03},
+    {"Code":"D6548","Name":"Ret-porc/cer-resin bnd fxd pros","DWV":10.11},
+    {"Code":"D6549","Name":"Ret-resin, resin bnd fxd pros","DWV":3.93},
+    {"Code":"D6600","Name":"Ret-inlay-porc/ceram, 2 surf","DWV":11.29},
+    {"Code":"D6601","Name":"Ret-inlay-porc/ceram, 3+surf","DWV":11.84},
+    {"Code":"D6602","Name":"Ret-inlay-high nob met,2surf","DWV":12.07},
+    {"Code":"D6603","Name":"Ret-Inlay-high nob met, 3+surf","DWV":13.27},
+    {"Code":"D6604","Name":"Ret-inlay-base metal, 2surf","DWV":11.83},
+    {"Code":"D6605","Name":"Ret-inlay-base metal, 3+surf","DWV":12.53},
+    {"Code":"D6606","Name":"Ret-inlay-noble metal, 2 surf","DWV":11.64},
+    {"Code":"D6607","Name":"Ret-inlay-noble metal, 3+ surf","DWV":12.91},
+    {"Code":"D6608","Name":"Ret-onlay-porc/ceram, 2 surf","DWV":12.27},
+    {"Code":"D6609","Name":"Ret-onlay-porc/ceram, 3+surf","DWV":12.81},
+    {"Code":"D6610","Name":"Ret-onlay-high noble met,2surf","DWV":13.01},
+    {"Code":"D6611","Name":"Ret-onlay-high nob met, 3+surf","DWV":14.51},
+    {"Code":"D6612","Name":"Ret-onlay-base metal, 2 surf","DWV":12.95},
+    {"Code":"D6613","Name":"Ret-onlay-base metal, 3+surf","DWV":13.53},
+    {"Code":"D6614","Name":"Ret-onlay-noble metal, 2 surf","DWV":12.67},
+    {"Code":"D6615","Name":"Ret-onlay-noble metal, 3+ surf","DWV":13.17},
+    {"Code":"D6624","Name":"Retainer inlay-titanium","DWV":12.07},
+    {"Code":"D6634","Name":"Retainer onlay-titanium","DWV":12.67},
+    {"Code":"D6710","Name":"Retainer-indirect resin comp","DWV":12.93},
+    {"Code":"D6720","Name":"Retainer-resin/high noble metal","DWV":15.08},
+    {"Code":"D6721","Name":"Retainer-resin/base metal","DWV":14.31},
+    {"Code":"D6722","Name":"Retainer-resin/noble metal","DWV":14.57},
+    {"Code":"D6740","Name":"Retainer-porcelain/ceramic","DWV":15.32},
+    {"Code":"D6750","Name":"Retainer-porc/high noble metal","DWV":14.54},
+    {"Code":"D6751","Name":"Retainer-porc/base metal","DWV":12.72},
+    {"Code":"D6752","Name":"Retainer-porc/noble metal","DWV":13.4},
+    {"Code":"D6753","Name":"Crown-porcelain fused-titanium","DWV":14.41},
+    {"Code":"D6780","Name":"Retainer-3/4, high noble metal","DWV":14.57},
+    {"Code":"D6781","Name":"Retainer-3/4, base metal","DWV":14.57},
+    {"Code":"D6782","Name":"Retainer-3/4, cast noble metal","DWV":13.53},
+    {"Code":"D6783","Name":"Retainer-3/4, porcelain/ceramic","DWV":15.0},
+    {"Code":"D6784","Name":"Crown-3/4 titanium & tnm alloys","DWV":14.57},
+    {"Code":"D6790","Name":"Retainer-high noble metal","DWV":14.45},
+    {"Code":"D6791","Name":"Retainer-base metal","DWV":13.73},
+    {"Code":"D6792","Name":"Retainer-noble metal","DWV":14.84},
+    {"Code":"D6793","Name":"Provisional retainer crown","DWV":6.17},
+    {"Code":"D6794","Name":"Retainer crown-titanium&alloys","DWV":14.65},
+    {"Code":"D6920","Name":"Connector bar","DWV":3.1},
+    {"Code":"D6930","Name":"Recement/rebond FPD","DWV":2.08},
+    {"Code":"D6940","Name":"Stress breaker","DWV":4.1},
+    {"Code":"D6950","Name":"Precision attachment","DWV":6.6},
+    {"Code":"D6970","Name":"Post/core+ rdg ret, fabr","DWV":0.0},
+    {"Code":"D6972","Name":"Prefab post/core+brdgreta","DWV":0.0},
+    {"Code":"D6973","Name":"Core b/u for retain","DWV":0.0},
+    {"Code":"D6976","Name":"Each add'l fabr post","DWV":0.0},
+    {"Code":"D6977","Name":"Each + prefab post","DWV":0.0},
+    {"Code":"D6980","Name":"FPD repair, material failure","DWV":3.4},
+    {"Code":"D6985","Name":"Pediatric FPD","DWV":6.9},
+    {"Code":"D6999","Name":"Unspec fixed prosthodontic procedure, B/R","DWV":0.0},
+    {"Code":"D7251","Name":"Coronectomy-part tooth removal","DWV":7.31},
+    {"Code":"D7252","Name":"Partial extract immediate imp plmnt","DWV":4.67},
+    {"Code":"D7259","Name":"Nerve Dissection","DWV":10.08},
+    {"Code":"D7260","Name":"Oroantral fistula closure","DWV":25.64},
+    {"Code":"D7261","Name":"Prim closure sinus perforation","DWV":10.22},
+    {"Code":"D7270","Name":"Reimplant/stabilize, trauma","DWV":6.33},
+    {"Code":"D7272","Name":"Tooth transplantation","DWV":10.11},
+    {"Code":"D7280","Name":"Exposure of an unerupted tooth","DWV":7.28},
+    {"Code":"D7282","Name":"Mobilize erupted/malposed tooth","DWV":4.57},
+    {"Code":"D7283","Name":"Plcmnt of device to help erupt","DWV":4.16},
+    {"Code":"D7284","Name":"Excisional biopsy of minor salivary glands","DWV":5.37},
+    {"Code":"D7287","Name":"Exfoliative cyt sample collectn","DWV":2.43},
+    {"Code":"D7288","Name":"Brush biopsy-transepith sample","DWV":2.43},
+    {"Code":"D7290","Name":"Surgical reposition of teeth","DWV":6.18},
+    {"Code":"D7291","Name":"T/SC fiberotomy","DWV":2.18},
+    {"Code":"D7292","Name":"TAD plate (incl flap + remove)","DWV":8.89},
+    {"Code":"D7293","Name":"TAD screw (incl flap + remove)","DWV":6.17},
+    {"Code":"D7294","Name":"TAD screw, no flap (incl remov)","DWV":4.91},
+    {"Code":"D7295","Name":"Bone Harvest for Grafting","DWV":18.53},
+    {"Code":"D7296","Name":"Corticotomy, 1-3 teeth/quad","DWV":12.95},
+    {"Code":"D7297","Name":"Corticotomy, 4+ teeth/quad","DWV":46.64},
+    {"Code":"D7298","Name":"Rmv screw retnd plate,req flap","DWV":6.44},
+    {"Code":"D7299","Name":"Rmv temp anch dev, req flap","DWV":5.78},
+    {"Code":"D7300","Name":"Rmv temp anch dev, w/o flap","DWV":1.99},
+    {"Code":"D7320","Name":"Alveoloplasty w/o ext 4+ /quad","DWV":5.52},
+    {"Code":"D7321","Name":"Alveoloplasty w/o ext 1-3/quad","DWV":4.9},
+    {"Code":"D7340","Name":"Vestibuloplasty-2nd epithelial","DWV":26.82},
+    {"Code":"D7350","Name":"Vestibuloplasty-tissue mngmnt","DWV":80.89},
+    {"Code":"D7410","Name":"Excision benign lesion<=1.25cm","DWV":5.64},
+    {"Code":"D7411","Name":"Excision benign lesion>1.25 cm","DWV":13.21},
+    {"Code":"D7412","Name":"Excision benign lesion-complex","DWV":21.02},
+    {"Code":"D7413","Name":"Excision malig lesion<=1.25cm","DWV":14.16},
+    {"Code":"D7414","Name":"Excision malig lesion>1.25cm","DWV":21.23},
+    {"Code":"D7415","Name":"Excision malig lesion-complex","DWV":23.76},
+    {"Code":"D7440","Name":"Ex malig tumor-diam <= 1.25 cm","DWV":19.21},
+    {"Code":"D7441","Name":"Ex malig tumor-diam > 1.25 cm","DWV":28.31},
+    {"Code":"D7450","Name":"Rem benign odont-diam<=1.25cm","DWV":10.08},
+    {"Code":"D7451","Name":"Rem benign odont-diam>1.25 cm","DWV":16.26},
+    {"Code":"D7460","Name":"Rem benign nonodont-di<=1.25cm","DWV":11.68},
+    {"Code":"D7461","Name":"Rem benign nonodont-diam>1.25cm","DWV":17.53},
+    {"Code":"D7465","Name":"Destruction of lesion-phys/chem","DWV":3.69},
+    {"Code":"D7471","Name":"Removal of exostosis-per site","DWV":10.53},
+    {"Code":"D7472","Name":"Removal of torus palatinus","DWV":17.74},
+    {"Code":"D7473","Name":"Removal of torus mandibularis","DWV":11.32},
+    {"Code":"D7485","Name":"Reduction of osseous tuberosity","DWV":15.03},
+    {"Code":"D7490","Name":"Rad resectn-maxilla or mandible","DWV":121.33},
+    {"Code":"D7509","Name":"Marsupialization of odontogenic cyst","DWV":6.3},
+    {"Code":"D7530","Name":"Remove foreign body from tissue","DWV":5.41},
+    {"Code":"D7540","Name":"Rem foreign body bone/muscle","DWV":8.27},
+    {"Code":"D7550","Name":"Partial ostect/sequestrectomy","DWV":6.29},
+    {"Code":"D7560","Name":"Sinusotomy-remove tooth, fbody","DWV":40.95},
+    {"Code":"D7610","Name":"Closed frac max-open reduction","DWV":66.23},
+    {"Code":"D7620","Name":"Closed frac max-closed reduct","DWV":49.67},
+    {"Code":"D7630","Name":"Closed frac mand-open reduction","DWV":86.11},
+    {"Code":"D7640","Name":"Closed frac mand-clsd reduct","DWV":54.64},
+    {"Code":"D7650","Name":"Closed frac mal/zyg-open reduct","DWV":41.4},
+    {"Code":"D7660","Name":"Closed frac mal/zyg-clsd reduct","DWV":24.41},
+    {"Code":"D7670","Name":"Closed frac aveolus-clsd reduct","DWV":19.05},
+    {"Code":"D7671","Name":"Closed frac aveolus-open reduct","DWV":35.89},
+    {"Code":"D7680","Name":"Closed frac facial-comp reduct","DWV":124.19},
+    {"Code":"D7710","Name":"Open frac max-open reduction","DWV":77.84},
+    {"Code":"D7720","Name":"Open frac max-closed reduct","DWV":54.64},
+    {"Code":"D7730","Name":"Open frac mand-open reduct","DWV":112.6},
+    {"Code":"D7740","Name":"Open frac mand-closed reduction","DWV":55.71},
+    {"Code":"D7750","Name":"Open frac mal/zyg-open reduct","DWV":70.86},
+    {"Code":"D7760","Name":"Open frac mal/zyg-closed reduct","DWV":28.43},
+    {"Code":"D7770","Name":"Open frac aveolus-open reduct","DWV":38.52},
+    {"Code":"D7771","Name":"Open frac aveolus-closed reduct","DWV":29.73},
+    {"Code":"D7780","Name":"Open frac facial-comp reduction","DWV":165.58},
+    {"Code":"D7810","Name":"Open reduction-dislocated TMJ","DWV":72.84},
+    {"Code":"D7820","Name":"Closed reduction-dislocated TMJ","DWV":11.93},
+    {"Code":"D7830","Name":"TMJ manipulation, under anes","DWV":6.84},
+    {"Code":"D7840","Name":"Condylectomy","DWV":99.29},
+    {"Code":"D7850","Name":"Surgical discectomy +/- implant","DWV":85.74},
+    {"Code":"D7852","Name":"Disc repair","DWV":98.18},
+    {"Code":"D7854","Name":"Synovectomy","DWV":101.31},
+    {"Code":"D7856","Name":"Myotomy","DWV":71.89},
+    {"Code":"D7858","Name":"Joint reconstruction","DWV":204.91},
+    {"Code":"D7860","Name":"Arthrotomy","DWV":87.34},
+    {"Code":"D7865","Name":"Arthroplasty","DWV":140.75},
+    {"Code":"D7870","Name":"Arthrocentesis","DWV":4.65},
+    {"Code":"D7871","Name":"Non-arthroscopic lysis & lavage","DWV":9.3},
+    {"Code":"D7872","Name":"Arthroscopy-diagosis +/- biopsy","DWV":49.65},
+    {"Code":"D7873","Name":"Arthroscopy-lavage/lysis adhes","DWV":59.78},
+    {"Code":"D7874","Name":"Arthroscopy-disc rpstn/stabil","DWV":85.74},
+    {"Code":"D7875","Name":"Arthroscopy: synovectomy","DWV":93.93},
+    {"Code":"D7876","Name":"Arthroscopy: discectomy","DWV":101.27},
+    {"Code":"D7877","Name":"Arthroscopy: debridement","DWV":89.38},
+    {"Code":"D7880","Name":"Occlusal orthotic device","DWV":13.45},
+    {"Code":"D7881","Name":"Occlusal ortho device adjustmnt","DWV":1.38},
+    {"Code":"D7899","Name":"Unspecified TMD therapy","DWV":0.0},
+    {"Code":"D7912","Name":"Complicated suture, > 5 cm","DWV":27.69},
+    {"Code":"D7920","Name":"Skin grafts, by report","DWV":48.84},
+    {"Code":"D7921","Name":"Coll/App Autologous Blood Conc","DWV":4.06},
+    {"Code":"D7922","Name":"Placement of dressing, per site","DWV":1.06},
+    {"Code":"D7939","Name":"Robotic assistance/dynamic nav osteotomy inde","DWV":4.74},
+    {"Code":"D7940","Name":"Osteoplasty-orthognathic defor","DWV":14.75},
+    {"Code":"D7941","Name":"Osteotomy-mandibular rami","DWV":0.0},
+    {"Code":"D7943","Name":"Osteotomy-mand rami w/ graft","DWV":0.0},
+    {"Code":"D7944","Name":"Osteotomy-segmented/subapical","DWV":101.82},
+    {"Code":"D7945","Name":"Osteotomy-body of mandible","DWV":135.49},
+    {"Code":"D7946","Name":"LeFort I (maxilla-total)","DWV":0.0},
+    {"Code":"D7947","Name":"LeFort I (maxilla-segmented)","DWV":0.0},
+    {"Code":"D7948","Name":"LeFort II/III-no bone graft","DWV":0.0},
+    {"Code":"D7949","Name":"LeFort II/III-with bone graft","DWV":0.0},
+    {"Code":"D7950","Name":"Graft of mandible or maxilla","DWV":22.23},
+    {"Code":"D7951","Name":"Sinus augment, lateral open","DWV":28.48},
+    {"Code":"D7952","Name":"Sinus augment-vertical approach","DWV":13.79},
+    {"Code":"D7953","Name":"Ridge preservation graft/site","DWV":7.77},
+    {"Code":"D7955","Name":"Repair MF soft/hard tiss defect","DWV":24.03},
+    {"Code":"D7956","Name":"Guided tiss regen, edent area-resrb, per site","DWV":7.08},
+    {"Code":"D7957","Name":"Guided tis regen, edent area-nonresorb, site","DWV":8.28},
+    {"Code":"D7960","Name":"Frenulectomy-separate procedur","DWV":0.0},
+    {"Code":"D7961","Name":"Frenectomy - buccal/labial","DWV":6.94},
+    {"Code":"D7962","Name":"Frenectomy - lingual","DWV":4.84},
+    {"Code":"D7963","Name":"Frenuloplasty","DWV":8.66},
+    {"Code":"D7970","Name":"Excise hyperplastic tissue/arch","DWV":7.26},
+    {"Code":"D7971","Name":"Excision of pericoronal gingiva","DWV":3.25},
+    {"Code":"D7972","Name":"Surg reduc, fibrous tuberosity","DWV":11.32},
+    {"Code":"D7979","Name":"Non-surgical sialolithotomy","DWV":4.83},
+    {"Code":"D7980","Name":"Surgical sialolithotomy","DWV":12.74},
+    {"Code":"D7981","Name":"Excision of salivary gland, B/R","DWV":0.0},
+    {"Code":"D7982","Name":"Sialodochoplasty","DWV":30.13},
+    {"Code":"D7983","Name":"Closure of salivary fistula","DWV":28.92},
+    {"Code":"D7990","Name":"Emergency tracheotomy","DWV":24.87},
+    {"Code":"D7991","Name":"Coronoidectomy","DWV":60.67},
+    {"Code":"D7993","Name":"Surgical place craniofacial implant-extraoral","DWV":20.66},
+    {"Code":"D7994","Name":"Zygomatic implant","DWV":54.21},
+    {"Code":"D7995","Name":"Synthetic graft-mand/facial","DWV":9.11},
+    {"Code":"D7996","Name":"Implant-mand to augment","DWV":31.21},
+    {"Code":"D7997","Name":"Appliance removal-incl archbar","DWV":4.65},
+    {"Code":"D7998","Name":"I/O fixation device-no fracture","DWV":20.22},
+    {"Code":"D8010","Name":"Limited ortho tx-primary","DWV":12.48},
+    {"Code":"D8020","Name":"Limited ortho tx-transitional","DWV":14.53},
+    {"Code":"D8030","Name":"Limited ortho tx-adolescent","DWV":17.53},
+    {"Code":"D8040","Name":"Limited ortho tx-adult","DWV":21.93},
+    {"Code":"D8050","Name":"Intercept ortho tx-primary","DWV":0.0},
+    {"Code":"D8060","Name":"Intercept ortho tx-transitional","DWV":0.0},
+    {"Code":"D8070","Name":"Comp ortho tx-transitional","DWV":29.06},
+    {"Code":"D8080","Name":"Comp ortho tx-adolescent","DWV":32.44},
+    {"Code":"D8090","Name":"Comp ortho tx-adult","DWV":34.11},
+    {"Code":"D8091","Name":"Compreh orth treat, orthognath surg","DWV":39.44},
+    {"Code":"D8210","Name":"Removable appliance therapy","DWV":4.64},
+    {"Code":"D8220","Name":"Fixed appliance therapy","DWV":4.64},
+    {"Code":"D8660","Name":"Pre-ortho exam, g & d","DWV":1.81},
+    {"Code":"D8670","Name":"Periodic ortho tx visit","DWV":1.91},
+    {"Code":"D8671","Name":"Periodic ortho trtmnt assoc orthognath surg","DWV":2.25},
+    {"Code":"D8680","Name":"Retention-remove appl/del rets","DWV":5.57},
+    {"Code":"D8681","Name":"Remov ortho retainer adjustment","DWV":1.16},
+    {"Code":"D8690","Name":"Ortho treatment (bill/contract)","DWV":0.0},
+    {"Code":"D8691","Name":"Repair of orthodontic appliance","DWV":0.0},
+    {"Code":"D8692","Name":"Replace lost/broken retainer","DWV":0.0},
+    {"Code":"D8693","Name":"Recement/bond fixed retainer","DWV":0.0},
+    {"Code":"D8694","Name":"Repair/reattach fixed retainer","DWV":0.0},
+    {"Code":"D8696","Name":"Repair ortho appliance-maxill","DWV":0.92},
+    {"Code":"D8697","Name":"Repair ortho appliance-mandib","DWV":0.92},
+    {"Code":"D8698","Name":"Recment/bond fxd retainer-maxil","DWV":0.86},
+    {"Code":"D8699","Name":"Recment/bond fxd retainer-mand","DWV":0.86},
+    {"Code":"D8701","Name":"Rpr/reattch fxd retainer-maxil","DWV":0.86},
+    {"Code":"D8702","Name":"Rpr/reattch fxd retainer-mandib","DWV":0.86},
+    {"Code":"D8703","Name":"Replace retainer-maxillary","DWV":2.15},
+    {"Code":"D8704","Name":"Replace retainer-mandibular","DWV":2.15},
+    {"Code":"D8999","Name":"Unspecified orthodontic procedure, B/R","DWV":0.0},
+    {"Code":"D9120","Name":"FPD sectioning","DWV":2.47},
+    {"Code":"D9128","Name":"Photobiomodulation thpy-1st 15 min","DWV":3.29},
+    {"Code":"D9129","Name":"Photobiomodulation thpy-add 15 min","DWV":2.19},
+    {"Code":"D9130","Name":"TMJ:non-invasive phys therapies","DWV":0.93},
+    {"Code":"D9210","Name":"Local anesthesia not op/surg","DWV":0.65},
+    {"Code":"D9212","Name":"Trigeminal division blk anesth","DWV":1.2},
+    {"Code":"D9219","Name":"Eval for deep sedation/GA","DWV":1.12},
+    {"Code":"D9222","Name":"Deep sedat/gen anesth-1st15min","DWV":3.34},
+    {"Code":"D9223","Name":"Deep sedat/gen anesth+15min","DWV":2.96},
+    {"Code":"D9224","Name":"Adm gen ansth w/adv arwy-1st 15 min","DWV":11.0},
+    {"Code":"D9225","Name":"Adm gen ansth w/adv arwy + 15 min","DWV":5.0},
+    {"Code":"D9230","Name":"Administration of nitrous oxide","DWV":1.13},
+    {"Code":"D9239","Name":"Admin IV mod sed/analg-1st15m","DWV":2.85},
+    {"Code":"D9243","Name":"Admin IV mod sed/analg-ea+15m","DWV":2.32},
+    {"Code":"D9244","Name":"Off admin of min sed-sngl dug-ent","DWV":2.96},
+    {"Code":"D9245","Name":"Admin of moderate sedation-enteral","DWV":3.7},
+    {"Code":"D9246","Name":"Admn mod sed-non-intrvns prntrl<15","DWV":2.67},
+    {"Code":"D9247","Name":"Admn mod sed-non-intrvns prntrl+15","DWV":2.01},
+    {"Code":"D9248","Name":"Non IV conscious sedation","DWV":3.12},
+    {"Code":"D9311","Name":"Consult w/ medical professional","DWV":2.74},
+    {"Code":"D9410","Name":"House/extended care facility","DWV":3.44},
+    {"Code":"D9420","Name":"Hospital Call","DWV":4.64},
+    {"Code":"D9430","Name":"Office visit for observation","DWV":0.83},
+    {"Code":"D9440","Name":"Office visit-after regular hrs","DWV":2.17},
+    {"Code":"D9450","Name":"Case present,detailed/extens tx","DWV":2.09},
+    {"Code":"D9610","Name":"Therap. parenteral drug-1 admin","DWV":1.0},
+    {"Code":"D9612","Name":"Therap. parenteral drug-2+admin","DWV":1.81},
+    {"Code":"D9613","Name":"Sustained rel therapeutic drug","DWV":1.27},
+    {"Code":"D9911","Name":"Desensitizing resin/tooth","DWV":0.75},
+    {"Code":"D9912","Name":"Pre-visit patient screening","DWV":0.61},
+    {"Code":"D9913","Name":"Administration of neuromodulators","DWV":2.92},
+    {"Code":"D9914","Name":"Administration of dermal fillers","DWV":3.47},
+    {"Code":"D9920","Name":"Behavior management","DWV":1.82},
+    {"Code":"D9932","Name":"Clean/inspect comp denture-max","DWV":0.86},
+    {"Code":"D9933","Name":"Clean/inspect comp denture-mand","DWV":1.06},
+    {"Code":"D9934","Name":"Clean/inspect partial dent-max","DWV":1.01},
+    {"Code":"D9935","Name":"Clean/inspect partial dent-mand","DWV":0.99},
+    {"Code":"D9936","Name":"Clean/insp occlusal guard-per app","DWV":0.91},
+    {"Code":"D9938","Name":"Fabrication of custom clear plastic aligner","DWV":5.55},
+    {"Code":"D9939","Name":"Placement of custom clear plastic aligner","DWV":1.57},
+    {"Code":"D9940","Name":"Occlusal guard","DWV":0.0},
+    {"Code":"D9941","Name":"Fabricate athletic mouthguard","DWV":2.5},
+    {"Code":"D9942","Name":"Repair/Reline of occlusal guard","DWV":2.24},
+    {"Code":"D9943","Name":"Occlusal guard adjustment","DWV":1.29},
+    {"Code":"D9944","Name":"Occlusal guard- hard, full arch","DWV":7.1},
+    {"Code":"D9945","Name":"Occlusal guard- soft, full arch","DWV":4.53},
+    {"Code":"D9946","Name":"Occlusal guard- hard, part arch","DWV":6.31},
+    {"Code":"D9947","Name":"Cust sleep apnea appl fab&place","DWV":32.44},
+    {"Code":"D9948","Name":"Adj cust sleep apnea appliance","DWV":1.58},
+    {"Code":"D9949","Name":"Repair cust sleep apnea appl","DWV":3.63},
+    {"Code":"D9950","Name":"Occlusal analysis-mounted case","DWV":3.47},
+    {"Code":"D9952","Name":"Occlusal adjustment-complete","DWV":7.09},
+    {"Code":"D9953","Name":"Reline custom sleep apnea appl (indirect)","DWV":6.61},
+    {"Code":"D9954","Name":"Fabrication/delivery of OAT","DWV":2.42},
+    {"Code":"D9955","Name":"Oral appliance therapy (OAT) titration visit","DWV":1.45},
+    {"Code":"D9956","Name":"Administration of home sleep apnea test","DWV":5.09},
+    {"Code":"D9957","Name":"Screening for sleep related breathing disorde","DWV":1.24},
+    {"Code":"D9959","Name":"Unspec sleep apnea servi proc, B/R","DWV":0.0},
+    {"Code":"D9961","Name":"Duplicate/copy patient records","DWV":1.33},
+    {"Code":"D9970","Name":"Enamel microabrasion","DWV":1.62},
+    {"Code":"D9971","Name":"Odontoplasty - per tooth","DWV":1.39},
+    {"Code":"D9972","Name":"Ext bleaching in-office/arch","DWV":3.8},
+    {"Code":"D9973","Name":"External bleaching-per tooth","DWV":0.66},
+    {"Code":"D9974","Name":"Internal bleaching-per tooth","DWV":3.63},
+    {"Code":"D9975","Name":"Ext bleaching at home/arch","DWV":1.82},
+    {"Code":"D9985","Name":"Sales Tax","DWV":0.0},
+    {"Code":"D9986","Name":"Missed appointment","DWV":0.95},
+    {"Code":"D9987","Name":"Cancelled Appointment","DWV":0.61},
+    {"Code":"D9990","Name":"Trans/sign-language - per visit","DWV":0.37},
+    {"Code":"D9991","Name":"DCM: appointment barriers","DWV":0.45},
+    {"Code":"D9992","Name":"DCM: care coordination","DWV":0.76},
+    {"Code":"D9993","Name":"DCM: motivational interviewing","DWV":0.9},
+    {"Code":"D9994","Name":"DCM: oral health education","DWV":0.35},
+    {"Code":"D9995","Name":"Teledent synch; real-time","DWV":2.06},
+    {"Code":"D9996","Name":"Teledent asynch; view later","DWV":1.86},
+    {"Code":"D9997","Name":"DCM: special health care needs","DWV":2.45},
+        {"Code":"W0002","Name":"Patient Encounter, Addl Procdr","DWV":0.0},
+    {"Code":"W0004","Name":"Dntl Svc Rec/Rec Addtn Review","DWV":0.0},
+    {"Code":"W0006","Name":"No-Show, Pt fail to kp appt","DWV":0.0},
+    {"Code":"W0007","Name":"Chart review for FMR","DWV":0.0},
+    {"Code":"W0009","Name":"Same day cancel","DWV":0.0},
+    {"Code":"W0102","Name":"Dental Readiness/Readiness Update","DWV":0.0},
+    {"Code":"W0108","Name":"Readiness Updt Based On Non-DoD Exm","DWV":0.0},
+    {"Code":"W0151","Name":"Tele-dental conslt orig MTF","DWV":0.28},
+    {"Code":"W0152","Name":"Tele-dental conslt rcvg MTF","DWV":0.28},
+    {"Code":"W0155","Name":"Teledentistry w/in DENTAC","DWV":0.0},
+    {"Code":"W0160","Name":"Initial T2 Eval","DWV":0.0},
+    {"Code":"W0161","Name":"Recall T2 Eval","DWV":0.0},
+    {"Code":"W0162","Name":"DNP T2 Eval","DWV":0.0},
+    {"Code":"W0180","Name":"Comp perio eval-new/est pt","DWV":0.0},
+    {"Code":"W0199","Name":"Sick Call","DWV":0.0},
+    {"Code":"W0414","Name":"Surg path, lab proc, grd I","DWV":0.8},
+    {"Code":"W0415","Name":"Surg path, lab proc, grd II","DWV":1.11},
+    {"Code":"W0416","Name":"Surg path, lab proc, grd III","DWV":0.86},
+    {"Code":"W0417","Name":"Surg path, lab proc, grd IV","DWV":1.53},
+    {"Code":"W0418","Name":"Surg path, lab proc, grd V","DWV":1.23},
+    {"Code":"W0419","Name":"Surg path, lab proc, grd VI","DWV":0.26},
+    {"Code":"W0503","Name":"Oral/maxfcl pathlgy rprt","DWV":1.04},
+    {"Code":"W1000","Name":"Orthodontic Data Evaluation","DWV":0.0},
+    {"Code":"W1201","Name":"F1/Varn-No Exam - No PX","DWV":0.0},
+    {"Code":"W1301","Name":"Caries Risk Assessment - Low","DWV":0.0},
+    {"Code":"W1302","Name":"Caries Risk Assess - Moder","DWV":0.0},
+    {"Code":"W1303","Name":"Caries Risk Assess - High","DWV":0.0},
+    {"Code":"W2001","Name":"Tooth Cond-Resto Extrnl Prov","DWV":0.0},
+    {"Code":"W2915","Name":"Recmnt/bnd cast post&core","DWV":0.0},
+    {"Code":"W2916","Name":"Recmnt/bnd prefab post&cr","DWV":0.0},
+    {"Code":"W2940","Name":"Sealant/prv rsn rst Rpr","DWV":0.0},
+    {"Code":"W2991","Name":"Class III Caries/Resto","DWV":0.0},
+    {"Code":"W3220","Name":"Thrapeutc Pulpotomy-Prmry","DWV":0.0},
+    {"Code":"W3910","Name":"Isolatn th w/ rubbr dam","DWV":0.0},
+    {"Code":"W4200","Name":"Prophylaxis for Periodontal Maint","DWV":0.0},
+    {"Code":"W5100","Name":"Intrm Comp Dent-Maxillry","DWV":0.0},
+    {"Code":"W5101","Name":"Intrm Comp Dent-Mandbular","DWV":0.0},
+    {"Code":"W5200","Name":"Intrm Part Dent-Maxillry","DWV":0.0},
+    {"Code":"W5201","Name":"Intrm Part Dent-Mandbular","DWV":0.0},
+    {"Code":"W6253","Name":"Provisional pontic-tooth","DWV":0.0},
+    {"Code":"W6793","Name":"Prvsnl rtnr crwn-tooth","DWV":0.0},
+    {"Code":"W7001","Name":"Tooth Condition - Missing","DWV":0.0},
+    {"Code":"W7002","Name":"Tooth Cond-DMD or Non Rst","DWV":0.0},
+    {"Code":"W7003","Name":"Tooth Condition - Extracted","DWV":0.0},
+    {"Code":"W7004","Name":"Missing Tooth Replaced","DWV":0.0},
+    {"Code":"W8000","Name":"Orthodontic Consultation","DWV":0.0},
+    {"Code":"W8010","Name":"Comprehensive orthodontic trt","DWV":0.0},
+    {"Code":"W8020","Name":"Comprehensive orthodontic trt","DWV":0.0},
+    {"Code":"W8030","Name":"Comprehensive orthodontic trt","DWV":0.0},
+    {"Code":"W8040","Name":"Comp Ortho Trt - Adult","DWV":0.0},
+    {"Code":"W8660","Name":"Pre-orthodontic Treatment Eval","DWV":0.0},
+    {"Code":"W8680","Name":"Ortho Retn / Post Tx Eval","DWV":0.0},
+    {"Code":"W9110","Name":"Pal tx Dnt pN Min proc","DWV":0.0},
+    {"Code":"W9201","Name":"Loc Anesth w/ Op/Surg Prc","DWV":0.0},
+    {"Code":"W9222","Name":"Deep sed/gen ans-ea 15 m","DWV":0.0},
+    {"Code":"W9244","Name":"Mod sed/analges-ea 15 m","DWV":0.0},
+    {"Code":"W9630","Name":"Rx / Medcment dispensed","DWV":0.0},
+    {"Code":"W9920","Name":"Bhevr Mgt - Mdfctn, 15 min","DWV":0.0},
+    {"Code":"W9988","Name":"Appointment Check In","DWV":0.0}
+
+];
+
+
+
+    
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const today = new Date();
+        document.getElementById('form-date').valueAsDate = today;
+        document.getElementById('mission-target-date').valueAsDate = today;
+        buildCodeMatrixLayout();
+        bindUIEvents();
+    });
+
+    // REPLACED: This function now renders both lists
+    function buildCodeMatrixLayout() {
+        const favList = document.getElementById('favorites-list');
+        const allList = document.getElementById('all-codes-list');
+        const favContainer = document.getElementById('favorites-container');
+        
+        favList.innerHTML = '';
+        allList.innerHTML = '';
+
+        // 1. Render Favorites in their saved order
+        if (userFavoriteCodes.length > 0) {
+            favContainer.classList.remove('hidden');
+            userFavoriteCodes.forEach(code => {
+                const item = masterRatesMatrix.find(m => m.Code === code);
+                if (item) { // Failsafe for codes that might be deleted from master list
+                    favList.appendChild(createMatrixRowDOM(item, true));
+                }
+            });
+        } else {
+            favContainer.classList.add('hidden');
+        }
+
+        // 2. Render All Other Codes
+        masterRatesMatrix.forEach(item => {
+            if (!userFavoriteCodes.includes(item.Code)) {
+                allList.appendChild(createMatrixRowDOM(item, false));
+            }
+        });
+
+        // 3. Initialize Drag-and-Drop
+        initSortable();
+        
+        // 4. Restore any counts from an active encounter (e.g., when editing)
+        Object.keys(currentEncounterData).forEach(code => {
+             const countEl = document.getElementById(`cnt-${code}`);
+             if(countEl) countEl.innerText = currentEncounterData[code];
+        });
+    }
+
+    // REPLACED: This function now creates rows with heart and drag icons
+    function createMatrixRowDOM(item, isFavorite) {
+        const { Code, Name, DWV } = item;
+        const row = document.createElement('div');
+        row.className = "counter-row";
+        row.id = `row-${Code}`;
+        row.setAttribute("data-code", Code);
+        row.setAttribute("data-name", Name.toUpperCase());
+
+        const heartClass = isFavorite ? 'fa-solid fa-heart is-favorite' : 'fa-regular fa-heart';
+        const dragHandle = isFavorite ? '<span class="drag-handle">☰</span>' : '';
+
+        row.innerHTML = `
+            ${dragHandle}
+            <i class="${heartClass} fav-btn" onclick="toggleFavorite('${Code}')"></i>
+            <div class="counter-info">
+                <div class="counter-title">${Code}</div>
+                <div class="counter-desc" title="${Name}">${Name} (DWV: ${DWV.toFixed(2)})</div>
+            </div>
+            <div class="counter-controls">
+                <button class="btn-ctrl" onclick="adjustCount('${Code}', -1)">-</button>
+                <span class="count-val" id="cnt-${Code}">0</span>
+                <button class="btn-ctrl" onclick="adjustCount('${Code}', 1)">+</button>
+            </div>
+        `;
+        return row;
+    }
+
+    // REPLACED: This function now also populates and filters the custom code dropdown
+    window.filterCodeMatrix = function() {
+        const val = document.getElementById('search-code').value.toUpperCase().trim();
+        const rows = document.querySelectorAll('.counter-row');
+        let exactMatchFound = false;
+
+        // Filter the main procedure lists (Favorites and All)
+        rows.forEach(row => {
+            const code = row.getAttribute("data-code");
+            const name = row.getAttribute("data-name");
+            const isVisible = val === '' || code.includes(val) || name.includes(val);
+            
+            row.classList.toggle('hidden', !isVisible);
+
+            if (isVisible && code === val) {
+                exactMatchFound = true;
+                row.classList.add('highlighted');
+            } else {
+                row.classList.remove('highlighted');
+            }
+        });
+
+        const customOverrideBox = document.getElementById('custom-override-fields');
+        const customSelector = document.getElementById('custom-code-selector');
+
+        // Logic to show the custom injector box and populate it
+        if (val && !exactMatchFound) {
+            customOverrideBox.classList.remove('hidden');
+            customSelector.innerHTML = '<option value="">Loading...</option>';
+
+            // Find matching custom codes
+            const matchingCustomCodes = selectableCustomCodes.filter(item => {
+                return (item.Code.toUpperCase().includes(val) || item.Name.toUpperCase().includes(val)) && !masterRatesMatrix.some(m => m.Code === item.Code);
+            });
+
+            if (matchingCustomCodes.length > 0) {
+                customSelector.innerHTML = ''; // Clear loading message
+                matchingCustomCodes.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.Code;
+                    option.innerText = `${item.Code} - ${item.Name} (DWV: ${item.DWV.toFixed(2)})`;
+                    customSelector.appendChild(option);
+                });
+            } else {
+                customSelector.innerHTML = '<option value="">No matching codes found</option>';
+            }
+        } else {
+            customOverrideBox.classList.add('hidden');
+        }
     };
 
-    let isRegisterMode = false;
 
-    // ----------------------------------------------------
-    // PROVIDER AUTHENTICATION ENGINE LOGIC (FIREBASE LAYER)
-    // ----------------------------------------------------
-    function toggleAuthMode() {
-        isRegisterMode = !isRegisterMode;
-        const regFields = document.getElementById("auth-registration-fields");
-        const title = document.getElementById("auth-title");
-        const subtitle = document.getElementById("auth-subtitle");
-        const submitBtn = document.getElementById("auth-submit-btn");
-        const toggleTrigger = document.getElementById("auth-toggle-trigger");
-
-        if (isRegisterMode) {
-            regFields.classList.remove("hidden");
-            title.innerHTML = '<i class="fa-solid fa-user-plus"></i> Provider Profile Creation';
-            subtitle.textContent = "Create an authenticated identity bound to database rules";
-            submitBtn.innerHTML = '<i class="fa-solid fa-user-check"></i> Provision Account';
-            toggleTrigger.innerHTML = "Already registered? <span>Sign In Here</span>";
-        } else {
-            regFields.classList.add("hidden");
-            title.innerHTML = '<i class="fa-solid fa-user-shield"></i> Provider Portal Sign In';
-            subtitle.textContent = "Access authorized dental operational logs";
-            submitBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Authorize Credential';
-            toggleTrigger.innerHTML = "Don't have an active tracker profile? <span>Register Account Here</span>";
+    // ADD THESE NEW FUNCTIONS
+    // Handles saving favorites to Firestore
+    async function saveUserFavorites() {
+        if (!currentUserProfile) return;
+        try {
+            await setDoc(doc(db, "users", currentUserProfile.uid), { 
+                favoriteCodes: userFavoriteCodes 
+            }, { merge: true }); // Use merge to avoid overwriting other user data
+        } catch (error) {
+            console.error("Error saving favorites:", error);
         }
     }
-
-    function handleAuthSubmission() {
-        const email = document.getElementById("auth-email").value.trim();
-        const password = document.getElementById("auth-password").value;
-
-        if (!email || !password) {
-            alert("Email and password fields are strictly mandatory.");
-            return;
-        }
-
-        if (firebaseConfig.apiKey === "YOUR_FIREBASE_API_KEY") {
-            alert("Firebase config keys are omitted or unpopulated. Bypassing security matrix layer to local instance mock mode.");
-            proceedToApplicationSetup("Offline Dev Doctor");
-            return;
-        }
-
-        if (isRegisterMode) {
-            const name = document.getElementById("auth-name").value.trim();
-            const branch = document.getElementById("auth-branch").value;
-            if (!name) {
-                alert("Please declare your Rank & Name descriptor for registration records.");
-                return;
+    
+    // Handles loading favorites from Firestore
+    async function loadUserFavorites(uid) {
+        try {
+            const userDoc = await getDoc(doc(db, "users", uid));
+            if (userDoc.exists() && userDoc.data().favoriteCodes) {
+                // Failsafe: Filter out any favorites that no longer exist in the master list
+                userFavoriteCodes = userDoc.data().favoriteCodes.filter(code => masterRatesMatrix.some(item => item.Code === code));
+            } else {
+                userFavoriteCodes = [];
             }
-
-            firebase.auth().createUserWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    const user = userCredential.user;
-                    // Seed newly authorized profile variables inside Realtime Database matching security configurations
-                    return firebase.database().ref('users/' + user.uid).set({
-                        name: name,
-                        branch: branch,
-                        email: email,
-                        authorizedAt: firebase.database.ServerValue.TIMESTAMP
-                    }).then(() => {
-                        alert("Account profile provisioned cleanly. Welcome to the tracking node.");
-                        proceedToApplicationSetup(name);
-                    });
-                })
-                .catch((error) => { alert(`Registration Exception: ${error.message}`); });
-        } else {
-            firebase.auth().signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    const user = userCredential.user;
-                    return firebase.database().ref('users/' + user.uid).once('value')
-                        .then((snapshot) => {
-                            const data = snapshot.val();
-                            const profileName = data ? data.name : "Authenticated Doctor";
-                            proceedToApplicationSetup(profileName);
-                        });
-                })
-                .catch((error) => { alert(`Authentication Error: ${error.message}`); });
+        } catch (error) {
+            console.error("Error loading favorites:", error);
+            userFavoriteCodes = [];
         }
     }
 
-    function handleSignOut() {
-        if (firebaseConfig.apiKey !== "YOUR_FIREBASE_API_KEY") {
-            firebase.auth().signOut().then(() => { location.reload(); });
+    // Toggles a code's favorite status
+    window.toggleFavorite = function(code) {
+        const index = userFavoriteCodes.indexOf(code);
+        if (index > -1) {
+            userFavoriteCodes.splice(index, 1); // Remove if it exists
         } else {
-            location.reload();
+            userFavoriteCodes.push(code); // Add to end if it doesn't
         }
+        
+        buildCodeMatrixLayout(); // Re-render the entire UI
+        saveUserFavorites(); // Save changes to the database
     }
 
-    function proceedToApplicationSetup(doctorDisplayName) {
-        document.getElementById("screen-auth").classList.add("hidden");
-        document.getElementById("screen-setup").classList.remove("hidden");
-        document.getElementById("setup-profile-string").textContent = `Logged in as: ${doctorDisplayName}`;
-        initializeApplicationEngine();
+    // Initializes the SortableJS drag-and-drop functionality
+    function initSortable() {
+        const favList = document.getElementById('favorites-list');
+        if (sortableInstance) {
+            sortableInstance.destroy(); // Destroy previous instance to prevent memory leaks
+        }
+        
+        sortableInstance = new Sortable(favList, {
+            handle: '.drag-handle', // Dragging is initiated by the '☰' handle
+            animation: 150,
+            onEnd: function (evt) {
+                // Get the new order of codes from the DOM
+                const newOrder = Array.from(favList.children).map(row => row.dataset.code);
+                userFavoriteCodes = newOrder;
+                saveUserFavorites(); // Save the new order to Firestore
+            }
+        });
     }
 
-    // Initialize application runtime state logic from browser local storage data caches
-    function initializeApplicationEngine() {
-        const storedState = localStorage.getItem("irt_dental_engine_state");
-        if (storedState) {
+
+
+    function bindUIEvents() {
+        document.getElementById('btn-toggle-auth').addEventListener('click', () => {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('auth-title').innerHTML = isRegisterMode ? '<i class="fa-solid fa-user-plus"></i> Register Provider' : '<i class="fa-solid fa-user-shield"></i> Provider Login';
+            document.getElementById('registration-fields').classList.toggle('hidden', !isRegisterMode);
+            document.getElementById('btn-auth-submit').innerText = isRegisterMode ? 'Create Profile' : 'Sign In';
+            document.getElementById('btn-toggle-auth').innerText = isRegisterMode ? 'Have an account? Login' : 'Need an account? Register';
+        });
+
+        document.getElementById('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
             try {
-                activeMissionState = JSON.parse(storedState);
-                document.getElementById("screen-setup").classList.add("hidden");
-                document.getElementById("main-operational-module").classList.remove("hidden");
-                
-                buildLoggingProviderInterfacePills();
-                populateProviderReviewSelectors();
-                syncDaySelectToBadge();
-                renderProcedureCountersList();
-                renderReviewStatsDashboard();
-            } catch (err) {
-                console.error("Storage parse issue encountered, defaulting to config screen.", err);
+                if (isRegisterMode) {
+                    const name = document.getElementById('reg-name').value || "Doctor";
+                    const branch = document.getElementById('reg-branch').value.toUpperCase() || "USNR";
+                    const site = document.getElementById('reg-site').value;
+                    const cred = await createUserWithEmailAndPassword(auth, email, password);
+                    await setDoc(doc(db, "users", cred.user.uid), { uid: cred.user.uid, name, branch, site, role: 'doctor' });
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+            } catch (err) { alert(`Auth Error: ${err.message}`); }
+        });
+
+        document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+    
+        // Find this in bindUIEvents() and replace it
+        document.getElementById('btn-add-custom-code').addEventListener('click', () => {
+            const selector = document.getElementById('custom-code-selector');
+            const selectedCode = selector.value;
+
+            if (!selectedCode) {
+                alert("Please select a valid code from the dropdown to inject.");
+                return;
             }
-        }
-    }
+            
+            // Find the full procedure object from our new custom codes list
+            const codeToAdd = selectableCustomCodes.find(item => item.Code === selectedCode);
 
-    function saveActiveMissionStateToBrowserCache() {
-        localStorage.setItem("irt_dental_engine_state", JSON.stringify(activeMissionState));
-    }
-
-    // Execute Wizard Parsing and setup internal tracking matrix entries
-    function executeSetupWizard() {
-        const nameInput = document.getElementById("setup-mission-name").value.trim();
-        const siteInput = document.getElementById("setup-site-name").value.trim();
-        const jsonText = document.getElementById("setup-providers-json").value.trim();
-
-        if (!nameInput || !siteInput) {
-            alert("Please provide values for the Mission Name and Site Location text fields.");
-            return;
-        }
-
-        try {
-            const parsedProviders = JSON.parse(jsonText);
-            if (!Array.isArray(parsedProviders) || parsedProviders.length === 0) {
-                alert("Provider array structure must be valid JSON format containing minimum one practitioner object.");
+            if (!codeToAdd) {
+                alert("Could not find the selected code. Please try again.");
                 return;
             }
 
-            activeMissionState.meta.missionName = nameInput;
-            activeMissionState.meta.siteName = siteInput;
-            activeMissionState.providers = parsedProviders;
-            activeMissionState.activeProviderName = parsedProviders[0].name;
-            
-            if (!activeMissionState.logs) activeMissionState.logs = [];
+            // Add the selected procedure to the main master list
+            masterRatesMatrix.push(codeToAdd);
 
-            saveActiveMissionStateToBrowserCache();
-            
-            document.getElementById("screen-setup").classList.add("hidden");
-            document.getElementById("main-operational-module").classList.remove("hidden");
+            // Set its count to 1 for the current encounter
+            currentEncounterData[codeToAdd.Code] = 1;
 
-            buildLoggingProviderInterfacePills();
-            populateProviderReviewSelectors();
-            syncDaySelectToBadge();
-            renderProcedureCountersList();
-            renderReviewStatsDashboard();
+            // Clear the search and hide the override box
+            document.getElementById('search-code').value = "";
+            document.getElementById('custom-override-fields').classList.add('hidden');
 
-        } catch (jsonErr) {
-            alert("Malformed input formatting caught inside JSON configuration script text container:\n" + jsonErr.message);
-        }
-    }
-
-    function resetToSetupScreen() {
-        if(confirm("Return back to setup config? State calculations will stay active unless cache is intentionally purged.")) {
-            document.getElementById("main-operational-module").classList.add("hidden");
-            document.getElementById("screen-setup").classList.remove("hidden");
-        }
-    }
-
-    function purgeEntireApplicationStorageData() {
-        if (confirm("CRITICAL ACTION: This permanently removes all calculated session entries. Confirm reset?")) {
-            localStorage.removeItem("irt_dental_engine_state");
-            activeMissionState = { meta: { missionName: "", siteName: "" }, providers: [], activeProviderName: null, logs: [] };
-            location.reload();
-        }
-    }
-
-    function buildLoggingProviderInterfacePills() {
-        const container = document.getElementById("logging-provider-pills");
-        container.innerHTML = "";
-        activeMissionState.providers.forEach(p => {
-            const pill = document.createElement("div");
-            pill.className = "provider-pill";
-            if (p.name === activeMissionState.activeProviderName) pill.className += " active";
-            pill.innerHTML = `<i class="fa-solid fa-user-md"></i> ${p.name} <small style="opacity:0.7;">(${p.branch})</small>`;
-            pill.onclick = () => {
-                activeMissionState.activeProviderName = p.name;
-                const allPills = container.getElementsByClassName("provider-pill");
-                for (let a of allPills) a.classList.remove("active");
-                pill.classList.add("active");
-                renderProcedureCountersList();
-                renderReviewStatsDashboard();
-            };
-            container.appendChild(pill);
+            // Re-render the UI and clear the filter
+            buildCodeMatrixLayout();
+            filterCodeMatrix();
         });
+
+    
+
+        document.getElementById('btn-submit-encounter').addEventListener('click', saveCurrentEncounterData);
+        document.getElementById('form-date').addEventListener('change', calculateNextActiveSequenceNumber);
+        document.getElementById('mission-target-date').addEventListener('change', runGlobalMissionTabPipeline);
+        document.getElementById('btn-export-day-matrix').addEventListener('click', downloadStructuredExcelPasteCsv);
+        document.getElementById('btn-export-personal-full').addEventListener('click', () => generateFullReport('personal'));
+        document.getElementById('btn-export-mission-full').addEventListener('click', () => generateFullReport('mission'));
+
     }
 
-    function populateProviderReviewSelectors() {
-        const selectElement = document.getElementById("review-provider-filter");
-        selectElement.innerHTML = '<option value="ALL">-- VIEW WHOLE SITE (ALL PROVIDERS) --</option>';
-        activeMissionState.providers.forEach(p => {
-            const opt = document.createElement("option");
-            opt.value = p.name;
-            opt.textContent = `${p.name} [${p.branch}]`;
-            selectElement.appendChild(opt);
-        });
-    }
 
-    function syncDateToDayLabel() {
-        console.log("Calendar baseline transaction date synchronized to: ", document.getElementById("form-date-input").value);
-    }
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists()) {
+                currentUserProfile = userDoc.data();
+                document.getElementById('user-display-name').innerText = currentUserProfile.name;
+                document.getElementById('user-display-meta').innerText = `${currentUserProfile.site} • ${currentUserProfile.branch}`;
+                
+                // New: Load favorites and then render the app
+                await loadUserFavorites(user.uid);
 
-    function syncDaySelectToBadge() {
-        const targetDay = document.getElementById("form-day-select").value;
-        const formattedDisplay = targetDay.replace("Day", "Day ");
-        document.getElementById("global-day-badge").textContent = formattedDisplay;
-        document.getElementById("export-day-select").value = targetDay;
-        renderProcedureCountersList();
-    }
-
-    function switchTab(targetTab) {
-        document.getElementById("tab-log").classList.remove("active");
-        document.getElementById("tab-review").classList.remove("active");
-        document.getElementById("tab-export").classList.remove("active");
-        document.getElementById("content-log").classList.add("hidden");
-        document.getElementById("content-review").classList.add("hidden");
-        document.getElementById("content-export").classList.add("hidden");
-
-        document.getElementById(`tab-${targetTab}`).classList.add("active");
-        document.getElementById(`content-${targetTab}`).classList.remove("hidden");
-        
-        if(targetTab === 'review') renderReviewStatsDashboard();
-    }
-
-    function getProcedureTallyCount(providerName, targetDayStr, procedureCode) {
-        const match = activeMissionState.logs.find(l => l.provider === providerName && l.day === targetDayStr && l.code === procedureCode);
-        return match ? match.count : 0;
-    }
-
-    function updateProcedureTallyDelta(procedureCode, delta) {
-        const targetDayStr = document.getElementById("form-day-select").value;
-        const providerName = activeMissionState.activeProviderName;
-        const currentDateValue = document.getElementById("form-date-input").value;
-
-        if(!providerName) {
-            alert("Establish operational configurations prior to making transactional adjustments.");
-            return;
-        }
-
-        let matchIndex = activeMissionState.logs.findIndex(l => l.provider === providerName && l.day === targetDayStr && l.code === procedureCode);
-
-        if (matchIndex > -1) {
-            let nextValue = activeMissionState.logs[matchIndex].count + delta;
-            if (nextValue <= 0) {
-                activeMissionState.logs.splice(matchIndex, 1);
-            } else {
-                activeMissionState.logs[matchIndex].count = nextValue;
-                activeMissionState.logs[matchIndex].date = currentDateValue;
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                resetEncounterFormState();
             }
-        } else if (delta > 0) {
-            activeMissionState.logs.push({
-                day: targetDayStr,
-                date: currentDateValue,
-                provider: providerName,
-                code: procedureCode,
-                count: delta
-            });
+        } else {
+            currentUserProfile = null;
+            userFavoriteCodes = []; // Clear favorites on logout
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('app-screen').classList.add('hidden');
         }
+    });
 
-        saveActiveMissionStateToBrowserCache();
-        
-        const countValueLabelElement = document.getElementById(`count-val-${procedureCode}`);
-        if(countValueLabelElement) {
-            countValueLabelElement.textContent = getProcedureTallyCount(providerName, targetDayStr, procedureCode);
-        }
+
+    window.switchView = function(viewName) {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('view-entry').classList.add('hidden');
+        document.getElementById('view-dashboard').classList.add('hidden');
+        document.getElementById('view-mission').classList.add('hidden');
+
+        document.getElementById(`tab-${viewName}`).classList.add('active');
+        document.getElementById(`view-${viewName}`).classList.remove('hidden');
+
+        if (viewName === 'dashboard') loadPersonalProviderMetricsDashboard();
+        if (viewName === 'mission') runGlobalMissionTabPipeline();
+    };
+
+    window.adjustCount = function(code, delta) {
+        if (!currentEncounterData[code]) currentEncounterData[code] = 0;
+        currentEncounterData[code] = Math.max(0, currentEncounterData[code] + delta);
+        document.getElementById(`cnt-${code}`).innerText = currentEncounterData[code];
+    };
+
+    async function calculateNextActiveSequenceNumber() {
+        if(!currentUserProfile || currentEditingDocId) return;
+        const targetDate = document.getElementById('form-date').value;
+        const q = query(collection(db, "encounters"), where("providerUid", "==", currentUserProfile.uid), where("date", "==", targetDate));
+        const snap = await getDocs(q);
+        document.getElementById('form-sequence-num').value = snap.size + 1;
     }
 
-    function renderProcedureCountersList() {
-        const container = document.getElementById("procedure-incremental-list");
-        container.innerHTML = "";
-        
-        const currentTargetDay = document.getElementById("form-day-select").value;
-        const currentProvider = activeMissionState.activeProviderName;
-
-        masterRatesMatrix.forEach(proc => {
-            const currentTallyValue = getProcedureTallyCount(currentProvider, currentTargetDay, proc.Code);
-
-            const row = document.createElement("div");
-            row.className = "procedure-item";
-            row.setAttribute("data-code", proc.Code.toLowerCase());
-            row.setAttribute("data-name", proc.Name.toLowerCase());
-
-            row.innerHTML = `
-                <div class="proc-info">
-                    <div class="proc-name"><strong>${proc.Code}</strong> — ${proc.Name}</div>
-                    <div class="proc-meta">DHA Base Value Weighted Credit: <strong>${proc.DWV.toFixed(2)} DWV</strong></div>
-                </div>
-                <div class="counter-controls">
-                    <button class="count-btn" onclick="updateProcedureTallyDelta('${proc.Code}', -1)"><i class="fa-solid fa-minus"></i></button>
-                    <span class="count-val" id="count-val-${proc.Code}">${currentTallyValue}</span>
-                    <button class="count-btn" onclick="updateProcedureTallyDelta('${proc.Code}', 1)"><i class="fa-solid fa-plus"></i></button>
-                </div>
-            `;
-            container.appendChild(row);
-        });
+    function resetEncounterFormState() {
+        currentEditingDocId = null;
+        currentEncounterData = {};
+        document.getElementById('edit-mode-banner').classList.add('hidden');
+        document.getElementById('form-date').valueAsDate = new Date();
+        document.querySelectorAll('.count-val').forEach(el => el.innerText = "0");
+        buildCodeMatrixLayout();
+        calculateNextActiveSequenceNumber();
     }
 
-    function filterProcedureInterfaceList() {
-        const filterQuery = document.getElementById("procedure-search").value.toLowerCase().trim();
-        const dynamicRows = document.getElementById("procedure-incremental-list").getElementsByClassName("procedure-item");
+    window.cancelEditMode = function() {
+        resetEncounterFormState();
+    };
 
-        for (let r of dynamicRows) {
-            const targetCodeMatch = r.getAttribute("data-code");
-            const targetNameMatch = r.getAttribute("data-name");
+    async function saveCurrentEncounterData() {
+        const date = document.getElementById('form-date').value;
+        const seqNum = parseInt(document.getElementById('form-sequence-num').value);
+        
+        const finalizedProcedures = [];
+        Object.keys(currentEncounterData).forEach(code => {
+            const qty = currentEncounterData[code];
+            if(qty > 0) {
+                let matched = masterRatesMatrix.find(m => m.Code === code);
+                let desc = matched ? matched.Name : "Custom Added Procedure";
+                let weight = matched ? matched.DWV : 0.0;
+                
+                const injectedRow = document.getElementById(`row-${code}`);
+                if(!matched && injectedRow) {
+                    desc = injectedRow.querySelector('.counter-desc').innerText.split(" (DWV:")[0];
+                }
 
-            if (targetCodeMatch.includes(filterQuery) || targetNameMatch.includes(filterQuery)) {
-                r.classList.remove("hidden");
-            } else {
-                r.classList.add("hidden");
+                finalizedProcedures.push({
+                    code,
+                    description: desc,
+                    qty: qty,
+                    dwv: weight,
+                    totalValue: (qty * weight * 115.71)
+                });
             }
-        }
-    }
+        });
 
-    function injectCustomCodeToDataset() {
-        let codeVal = document.getElementById("custom-code").value.toUpperCase().trim();
-        let dwvVal = parseFloat(document.getElementById("custom-dwv").value);
-        let descVal = document.getElementById("custom-desc").value.trim() || "Custom Procedure Entry";
-
-        if(!codeVal || isNaN(dwvVal)) {
-            alert("Provide code format metrics and a numerical standard conversion factor.");
+        if(finalizedProcedures.length === 0) {
+            alert("Cannot commit transaction: Log at least 1 procedure.");
             return;
         }
 
-        let existingMatch = masterRatesMatrix.find(m => m.Code === codeVal);
-        if(existingMatch) {
-            alert(`Procedure ${codeVal} already exists within global data matrix configuration sets.`);
-            return;
-        }
+        const payload = {
+            date,
+            patientSequenceNum: seqNum,
+            providerUid: currentUserProfile.uid,
+            providerName: currentUserProfile.name,
+            serviceBranch: currentUserProfile.branch,
+            site: currentUserProfile.site,
+            procedures: finalizedProcedures,
+            timestamp: new Date().toISOString()
+        };
 
-        masterRatesMatrix.push({ Code: codeVal, Name: descVal, DWV: dwvVal });
-        alert(`Successfully injected code template [${codeVal}] into tracking schema memory matrices.`);
-        
-        document.getElementById("custom-code").value = "";
-        document.getElementById("custom-dwv").value = "";
-        document.getElementById("custom-desc").value = "";
-
-        renderProcedureCountersList();
-    }
-
-    function renderReviewStatsDashboard() {
-        const activeFilter = document.getElementById("review-provider-filter").value;
-        const currentSelectedDay = document.getElementById("form-day-select").value;
-
-        let totalComputedProcedures = 0;
-        let cumulativeCalculatedDWV = 0.0;
-
-        const ledgerHistoryBox = document.getElementById("live-history-ledger");
-        ledgerHistoryBox.innerHTML = "";
-
-        let filteredLogRecords = activeMissionState.logs.filter(l => {
-            const providerCheck = (activeFilter === "ALL" || l.provider === activeFilter);
-            const trackingDayCheck = (l.day === currentSelectedDay);
-            return providerCheck && trackingDayCheck;
-        });
-
-        filteredLogRecords.forEach(entry => {
-            const rateObj = masterRatesMatrix.find(m => m.Code === entry.code) || { Name: "Unmapped Procedure", DWV: 0.00 };
-            const lineComputedDWVValueSum = rateObj.DWV * entry.count;
-
-            totalComputedProcedures += entry.count;
-            cumulativeCalculatedDWV += lineComputedDWVValueSum;
-
-            const trackingWidget = document.createElement("div");
-            trackingWidget.className = "history-entry";
-            trackingWidget.innerHTML = `
-                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                    <strong>${entry.provider}</strong>
-                    <span style="color:var(--primary); font-weight:600;">${entry.code} (x${entry.count})</span>
-                </div>
-                <div style="font-size:0.8rem; color:var(--gray-600);">${rateObj.Name}</div>
-                <div style="font-size:0.8rem; text-align:right; margin-top:2px; font-weight:600; color:var(--success);">
-                    Subtotal DWV: ${lineComputedDWVValueSum.toFixed(2)}
-                </div>
-            `;
-            ledgerHistoryBox.appendChild(trackingWidget);
-        });
-
-        document.getElementById("stat-proc-count").textContent = totalComputedProcedures;
-        document.getElementById("stat-dwv-sum").textContent = cumulativeCalculatedDWV.toFixed(2);
-    }
-
-    /**
-     * CSV Export Matrix Generation Engine
-     * Generates standard matrix data maps structurally compliant with row 94 requirements.
-     * places the matching DWV value column directly next to the active procedure code column.
-     */
-    function exportDataMatrixCSV(mode) {
         try {
-            const targetDay = document.getElementById("export-day-select").value;
-            let sortedProviders = [...activeMissionState.providers].sort((a, b) => a.name.localeCompare(b.name));
+            if (currentEditingDocId) {
+                await updateDoc(doc(db, "encounters", currentEditingDocId), payload);
+                alert("Patient Record updated successfully.");
+            } else {
+                await addDoc(collection(db, "encounters"), payload);
+                alert(`Patient Entry Record #${seqNum} Committed.`);
+            }
+            resetEncounterFormState();
+        } catch(err) { alert(`Write Failure: ${err.message}`); }
+    }
 
-            // Setup spreadsheet layout headers matching Row 94 definitions
-            let row1_Names = ["PROVIDER METRICS", `Site: ${activeMissionState.meta.siteName || 'RVIHC Dental'}`, "Provider Name:"];
-            let row2_Branches = ["", "", "Service Branch:"];
-            let row3_Sites = ["", "", "Target Scope:"];
+    async function loadPersonalProviderMetricsDashboard() {
+        if(!currentUserProfile) return;
+        const todayStr = document.getElementById('form-date').value;
+        const q = query(collection(db, "encounters"), where("providerUid", "==", currentUserProfile.uid));
+        const snapshot = await getDocs(q);
+
+        let dPt = 0, dProc = 0, dDwv = 0;
+        let mPt = 0, mProc = 0, mDwv = 0;
+        
+        // --- START OF CHANGES ---
+
+        // 1. Collect all encounters into an array first
+        let encounters = [];
+        snapshot.forEach(docSnap => {
+            encounters.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        // 2. Sort the array: by Date (descending), then Patient Number (ascending)
+        encounters.sort((a, b) => {
+            if (a.date > b.date) return -1; // Sort newest dates to the top
+            if (a.date < b.date) return 1;
+            
+            // If dates are the same, sort by patient sequence number
+            return a.patientSequenceNum - b.patientSequenceNum;
+        });
+
+        // 3. Build the HTML from the now-sorted array
+        let logsHTML = "";
+        encounters.forEach(enc => {
+            const id = enc.id;
+            let pCount = 0, recordDwv = 0;
+
+            enc.procedures.forEach(p => {
+                pCount += p.qty;
+                recordDwv += (p.qty * p.dwv);
+            });
+
+            mPt++;
+            mProc += pCount;
+            mDwv += recordDwv;
+
+            if (enc.date === todayStr) {
+                dPt++;
+                dProc += pCount;
+                dDwv += recordDwv;
+            }
+
+            logsHTML += `
+                <div class="history-item" onclick="loadEncounterForActiveEditing('${id}')">
+                    <div style="display:flex; justify-content:space-between; font-weight:600;">
+                        <span>Patient Rec #${enc.patientSequenceNum}</span>
+                        <span style="color:var(--primary-light); font-size:0.8rem;">${enc.date}</span>
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--gray-600); margin-top:2px;">
+                        Procedures: ${pCount} | Weight: ${recordDwv.toFixed(2)} DWV
+                    </div>
+                </div>`;
+        });
+
+        // --- END OF CHANGES ---
+
+        document.getElementById('stat-day-pt').innerText = dPt;
+        document.getElementById('stat-day-proc').innerText = dProc;
+        document.getElementById('stat-day-dwv').innerText = dDwv.toFixed(2);
+
+        document.getElementById('stat-miss-pt').innerText = mPt;
+        document.getElementById('stat-miss-proc').innerText = mProc;
+        document.getElementById('stat-miss-dwv').innerText = mDwv.toFixed(2);
+
+        document.getElementById('dashboard-history-logs').innerHTML = logsHTML || "<p style='font-size:0.8rem; color:var(--gray-600);'>No historical records found.</p>";
+    }
+
+
+    window.loadEncounterForActiveEditing = async function(docId) {
+        try {
+            const snap = await getDoc(doc(db, "encounters", docId));
+            if(!snap.exists()) return;
+            
+            const data = snap.data();
+            currentEditingDocId = docId;
+            currentEncounterData = {};
+
+            document.getElementById('form-date').value = data.date;
+            document.getElementById('form-sequence-num').value = data.patientSequenceNum;
+            
+            document.getElementById('edit-target-label').innerText = `#${data.patientSequenceNum} (${data.date})`;
+            document.getElementById('edit-mode-banner').classList.remove('hidden');
+
+            document.querySelectorAll('.count-val').forEach(el => el.innerText = "0");
+
+            data.procedures.forEach(p => {
+                currentEncounterData[p.code] = p.qty;
+                if (!document.getElementById(`cnt-${p.code}`)) {
+                    const container = document.getElementById('matrix-scroll-container');
+                    const element = createMatrixRowDOM(p.code, p.description, p.dwv);
+                    container.insertBefore(element, container.firstChild);
+                }
+                document.getElementById(`cnt-${p.code}`).innerText = p.qty;
+            });
+
+            switchView('entry');
+        } catch(err) { alert(`Error Loading Record: ${err.message}`); }
+    };
+
+    /* =========================================================================
+       MISSION BREAKDOWN LOGIC AND HORIZONTAL SPREADSHEET STRUCTURAL INTERACTION
+       ========================================================================= */
+    async function runGlobalMissionTabPipeline() {
+        const selectedDay = document.getElementById('mission-target-date').value;
+        document.getElementById('lbl-mission-day-title').innerText = `Target Day Breakdown: ${selectedDay}`;
+
+        const snapshot = await getDocs(collection(db, "encounters"));
+        
+        let dayStats = {
+            "Site 1": { pts: 0, procs: 0, dwv: 0 },
+            "Site 2": { pts: 0, procs: 0, dwv: 0 },
+            "Site 3": { pts: 0, procs: 0, dwv: 0 }
+        };
+        let globalStats = {
+            "Site 1": { pts: 0, procs: 0, dwv: 0 },
+            "Site 2": { pts: 0, procs: 0, dwv: 0 },
+            "Site 3": { pts: 0, procs: 0, dwv: 0 }
+        };
+
+        snapshot.forEach(docSnap => {
+            const enc = docSnap.data();
+            const siteKey = enc.site || "Site 1";
+            if(!globalStats[siteKey]) return;
+
+            let encProcs = 0;
+            let encDwv = 0;
+            enc.procedures.forEach(p => {
+                encProcs += p.qty;
+                encDwv += (p.qty * p.dwv);
+            });
+
+            // Cumulative global aggregation
+            globalStats[siteKey].pts++;
+            globalStats[siteKey].procs += encProcs;
+            globalStats[siteKey].dwv += encDwv;
+
+            // Target selected daily aggregation
+            if (enc.date === selectedDay) {
+                dayStats[siteKey].pts++;
+                dayStats[siteKey].procs += encProcs;
+                dayStats[siteKey].dwv += encDwv;
+            }
+        });
+
+        // Populate Day Breakdown UI
+        let dayHtml = "";
+        Object.keys(dayStats).forEach(site => {
+            dayHtml += `
+                <div class="site-block-summary">
+                    <div class="site-block-title">${site}</div>
+                    <div class="site-grid-sub">
+                        <div class="stat-card"><div class="stat-num">${dayStats[site].pts}</div><div class="stat-lbl">Patients</div></div>
+                        <div class="stat-card"><div class="stat-num">${dayStats[site].procs}</div><div class="stat-lbl">Procedures</div></div>
+                        <div class="stat-card"><div class="stat-num">${dayStats[site].dwv.toFixed(2)}</div><div class="stat-lbl">DWV</div></div>
+                    </div>
+                </div>`;
+        });
+        document.getElementById('container-mission-day-breakdown').innerHTML = dayHtml;
+
+        // Populate Cumulative Breakdown UI
+        let globalHtml = "";
+        Object.keys(globalStats).forEach(site => {
+            globalHtml += `
+                <div class="site-block-summary">
+                    <div class="site-block-title">${site}</div>
+                    <div class="site-grid-sub">
+                        <div class="stat-card"><div class="stat-num">${globalStats[site].pts}</div><div class="stat-lbl">Patients</div></div>
+                        <div class="stat-card"><div class="stat-num">${globalStats[site].procs}</div><div class="stat-lbl">Procedures</div></div>
+                        <div class="stat-card"><div class="stat-num">${globalStats[site].dwv.toFixed(2)}</div><div class="stat-lbl">Total DWV</div></div>
+                    </div>
+                </div>`;
+        });
+        document.getElementById('container-mission-global-breakdown').innerHTML = globalHtml;
+    }
+
+    async function downloadStructuredExcelPasteCsv() {
+        const targetDay = document.getElementById('mission-target-date').value;
+        if(!targetDay) { alert("Please select a target date."); return; }
+
+        try {
+            const snapshot = await getDocs(collection(db, "encounters"));
+            let providersMap = {};
+            
+            snapshot.forEach(docSnap => {
+                const enc = docSnap.data();
+                if(enc.date !== targetDay) return;
+
+                const nameKey = enc.providerName || "Unknown Provider";
+                const siteKey = enc.site || "Site 1";
+                const branchKey = enc.serviceBranch || "USNR";
+
+                if (!providersMap[nameKey]) {
+                    providersMap[nameKey] = {
+                        name: nameKey,
+                        branch: branchKey,
+                        site: siteKey,
+                        tallies: {}
+                    };
+                }
+
+                enc.procedures.forEach(p => {
+                    if(!providersMap[nameKey].tallies[p.code]) providersMap[nameKey].tallies[p.code] = 0;
+                    providersMap[nameKey].tallies[p.code] += p.qty;
+                });
+            });
+
+            let sortedProviders = Object.values(providersMap);
+            if(sortedProviders.length === 0) {
+                alert(`No records found logged for ${targetDay}.`);
+                return;
+            }
+
+            // Sorting Priorities: Site Sequence (1 -> 2 -> 3), then Alphabetical Provider Names
+            sortedProviders.sort((a, b) => {
+                if (a.site !== b.site) return a.site.localeCompare(b.site);
+                return a.name.localeCompare(b.name);
+            });
+
+            // Construct 1-to-1 Excel alignment grid row headers with the new DWV column
+            let row1_Names = ["Code Field Header", "Description Label", "DWV"]; // Row 92
+            let row2_Branches = ["", "", ""];                              // Row 93
+            let row3_Sites = ["", "", ""];                                 // Row 94
 
             sortedProviders.forEach(p => {
                 row1_Names.push(`"${p.name}"`);
                 row2_Branches.push(`"${p.branch}"`);
-                row3_Sites.push(mode === 'single' ? `"${targetDay}"` : `"MISSION-WIDE"`);
+                row3_Sites.push(`"${p.site}"`);
             });
 
-            // Columns ordered precisely: Description -> CDT Code -> DWV VALUE
-            let finalCsvDataMatrix = [
-                row1_Names, 
-                row2_Branches, 
-                row3_Sites,
-                ["Procedure Description", "CDT CODE", "DWV VALUE CREDIT"] 
-            ];
+            let finalCsvDataMatrix = [row1_Names, row2_Branches, row3_Sites];
 
-            sortedProviders.forEach(p => {
-                finalCsvDataMatrix[3].push(`"${p.name} Tallies"`);
-            });
-
+            // Map standard procedure layout tracking rows, now including the DWV
             masterRatesMatrix.forEach(matrixItem => {
-                let currentLineRow = [`"${matrixItem.Name}"`, matrixItem.Code, matrixItem.DWV.toFixed(2)];
+                // Add Code, Name, and the new DWV value to the start of the row
+                let currentLineRow = [matrixItem.Code, `"${matrixItem.Name}"`, matrixItem.DWV.toFixed(2)];
                 
                 sortedProviders.forEach(p => {
-                    let calculatedCounter = 0;
-
-                    if (mode === 'single') {
-                        const filteredDayMatches = activeMissionState.logs.filter(l => 
-                            l.provider === p.name && 
-                            l.day === targetDay && 
-                            l.code === matrixItem.Code
-                        );
-                        filteredDayMatches.forEach(m => calculatedCounter += m.count);
-                    } else {
-                        const filteredMissionMatches = activeMissionState.logs.filter(l => 
-                            l.provider === p.name && 
-                            l.code === matrixItem.Code
-                        );
-                        filteredMissionMatches.forEach(m => calculatedCounter += m.count);
-                    }
-
-                    currentLineRow.push(calculatedCounter);
+                    const totalTally = p.tallies[matrixItem.Code] || 0;
+                    currentLineRow.push(totalTally);
                 });
 
                 finalCsvDataMatrix.push(currentLineRow);
             });
 
-            let csvContent = "data:text/csv;charset=utf-8,\\uFEFF" + finalCsvDataMatrix.map(e => e.join(",")).join("\n");
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + finalCsvDataMatrix.map(e => e.join(",")).join("\n");
             let encodedUri = encodeURI(csvContent);
-            
-            let downloadAnchorElement = document.createElement("a");
-            downloadAnchorElement.setAttribute("href", encodedUri);
-            
-            const generatedFilenameString = mode === 'single' 
-                ? `IRT_Dental_Paste_Matrix_${targetDay}.csv` 
-                : `IRT_Dental_Paste_Matrix_FULL_MISSION.csv`;
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `IRT_Dental_Paste_Matrix_${targetDay}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
 
-            downloadAnchorElement.setAttribute("download", generatedFilenameString);
-            document.body.appendChild(downloadAnchorElement);
-            downloadAnchorElement.click();
-            document.body.removeChild(downloadAnchorElement);
-
-        } catch (err) { 
-            alert(`An unexpected error interrupted data array matrix assembly lines: ${err.message}`); 
-        }
+        } catch (err) { alert(`Export Error: ${err.message}`); }
     }
+
+    async function generateFullReport(scope) {
+        if (scope === 'personal' && !currentUserProfile) {
+            alert("You must be logged in to download a personal report.");
+            return;
+        }
+
+        try {
+            let snapshot;
+            if (scope === 'personal') {
+                // Fetch only the logged-in user's records
+                const q = query(collection(db, "encounters"), where("providerUid", "==", currentUserProfile.uid));
+                snapshot = await getDocs(q);
+            } else {
+                // Fetch ALL records for the whole mission
+                snapshot = await getDocs(collection(db, "encounters"));
+            }
+
+            let encounters = [];
+            snapshot.forEach(docSnap => encounters.push(docSnap.data()));
+
+            if (encounters.length === 0) {
+                alert(`No records found for the ${scope} report.`);
+                return;
+            }
+
+            // --- SORTING LOGIC ---
+            encounters.sort((a, b) => {
+                // If Mission scope, group by Provider Name first
+                if (scope === 'mission') {
+                    const nameA = a.providerName || "Unknown";
+                    const nameB = b.providerName || "Unknown";
+                    if (nameA < nameB) return -1;
+                    if (nameA > nameB) return 1;
+                }
+                // Then sort by Date (Ascending)
+                if (a.date < b.date) return -1;
+                if (a.date > b.date) return 1;
+                // Finally sort by Patient Sequence Number (Ascending)
+                return (a.patientSequenceNum || 0) - (b.patientSequenceNum || 0);
+            });
+
+            // --- BUILD CSV HEADERS ---
+            let csvData = [];
+            
+            if (scope === 'mission') {
+                csvData.push(["Code", "Description", "DWV", ...encounters.map(e => `"${e.providerName || 'Unknown'}"`), "Total DWV"]);
+                csvData.push(["", "", "", ...encounters.map(e => e.date), ""]);
+            } else {
+                csvData.push(["Code", "Description", "DWV", ...encounters.map(e => e.date), "Total DWV"]);
+            }
+            
+            // Add the Patient Record row for both
+            csvData.push(["", "", "", ...encounters.map(e => `"Pt #${e.patientSequenceNum || 0}"`), ""]);
+
+            let grandTotalDwv = 0;
+
+            // --- BUILD PROCEDURE ROWS ---
+            masterRatesMatrix.forEach(matrixItem => {
+                let row = [matrixItem.Code, `"${matrixItem.Name}"`, matrixItem.DWV.toFixed(2)];
+                let rowTotalDwv = 0;
+
+                encounters.forEach(enc => {
+                    const proc = enc.procedures.find(p => p.code === matrixItem.Code);
+                    const qty = proc ? proc.qty : 0;
+                    row.push(qty); // Add the quantity under the patient's column
+                    rowTotalDwv += (qty * matrixItem.DWV);
+                });
+
+                row.push(rowTotalDwv.toFixed(2)); // Last column: Total DWV for this procedure
+                grandTotalDwv += rowTotalDwv;
+                csvData.push(row);
+            });
+
+            // --- BOTTOM RIGHT TOTAL ---
+            let bottomRow = ["", "GRAND TOTAL", ""];
+            encounters.forEach(() => bottomRow.push("")); // Pad empty spaces for every patient column
+            bottomRow.push(grandTotalDwv.toFixed(2));     // Put the grand total in the last column
+            csvData.push(bottomRow);
+
+            // --- TRIGGER DOWNLOAD ---
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csvData.map(e => e.join(",")).join("\n");
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            
+            let filename = scope === 'mission' ? 'IRT_Mission_Full_Report.csv' : `IRT_Personal_Report_${currentUserProfile.name.replace(/\s+/g, '_')}.csv`;
+            link.setAttribute("download", filename);
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+        } catch (err) { alert(`Export Error: ${err.message}`); }
+    }
+
+
+
+    
 </script>
 </body>
 </html>
