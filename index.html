@@ -1881,11 +1881,9 @@ const selectableCustomCodes = [
         try {
             let snapshot;
             if (scope === 'personal') {
-                // Fetch only the logged-in user's records
                 const q = query(collection(db, "encounters"), where("providerUid", "==", currentUserProfile.uid));
                 snapshot = await getDocs(q);
             } else {
-                // Fetch ALL records for the whole mission
                 snapshot = await getDocs(collection(db, "encounters"));
             }
 
@@ -1899,36 +1897,46 @@ const selectableCustomCodes = [
 
             // --- SORTING LOGIC ---
             encounters.sort((a, b) => {
-                // If Mission scope, group by Provider Name first
                 if (scope === 'mission') {
                     const nameA = a.providerName || "Unknown";
                     const nameB = b.providerName || "Unknown";
                     if (nameA < nameB) return -1;
                     if (nameA > nameB) return 1;
                 }
-                // Then sort by Date (Ascending)
                 if (a.date < b.date) return -1;
                 if (a.date > b.date) return 1;
-                // Finally sort by Patient Sequence Number (Ascending)
                 return (a.patientSequenceNum || 0) - (b.patientSequenceNum || 0);
             });
 
-            // --- BUILD CSV HEADERS ---
+            // --- START OF CORRECTED CSV BUILDING ---
             let csvData = [];
             
+            // Build Header Rows
+            const header_Code = ["Code", "Description", "DWV"];
+            const header_Provider = ["Provider", "", ""];
+            const header_Date = ["Date", "", ""];
+            const header_PtNum = ["Patient Record #", "", ""];
+
+            encounters.forEach(enc => {
+                header_Code.push(""); // Placeholder for alignment
+                header_Provider.push(`"${enc.providerName || 'Unknown'}"`);
+                header_Date.push(enc.date);
+                header_PtNum.push(`"${enc.patientSequenceNum || 0}"`);
+            });
+            header_Code.push("Total DWV");
+            header_Provider.push("");
+            header_Date.push("");
+            header_PtNum.push("");
+
+            // Add headers based on scope
             if (scope === 'mission') {
-                csvData.push(["Code", "Description", "DWV", ...encounters.map(e => `"${e.providerName || 'Unknown'}"`), "Total DWV"]);
-                csvData.push(["", "", "", ...encounters.map(e => e.date), ""]);
-            } else {
-                csvData.push(["Code", "Description", "DWV", ...encounters.map(e => e.date), "Total DWV"]);
+                csvData.push(header_Provider);
             }
+            csvData.push(header_Date);
+            csvData.push(header_PtNum);
             
-            // Add the Patient Record row for both
-            csvData.push(["", "", "", ...encounters.map(e => `"Pt #${e.patientSequenceNum || 0}"`), ""]);
-
+            // --- Build Procedure Data Rows ---
             let grandTotalDwv = 0;
-
-            // --- BUILD PROCEDURE ROWS ---
             masterRatesMatrix.forEach(matrixItem => {
                 let row = [matrixItem.Code, `"${matrixItem.Name}"`, matrixItem.DWV.toFixed(2)];
                 let rowTotalDwv = 0;
@@ -1936,19 +1944,19 @@ const selectableCustomCodes = [
                 encounters.forEach(enc => {
                     const proc = enc.procedures.find(p => p.code === matrixItem.Code);
                     const qty = proc ? proc.qty : 0;
-                    row.push(qty); // Add the quantity under the patient's column
+                    row.push(qty);
                     rowTotalDwv += (qty * matrixItem.DWV);
                 });
 
-                row.push(rowTotalDwv.toFixed(2)); // Last column: Total DWV for this procedure
+                row.push(rowTotalDwv.toFixed(2));
                 grandTotalDwv += rowTotalDwv;
                 csvData.push(row);
             });
 
-            // --- BOTTOM RIGHT TOTAL ---
+            // --- Build Bottom Right Total Row ---
             let bottomRow = ["", "GRAND TOTAL", ""];
-            encounters.forEach(() => bottomRow.push("")); // Pad empty spaces for every patient column
-            bottomRow.push(grandTotalDwv.toFixed(2));     // Put the grand total in the last column
+            encounters.forEach(() => bottomRow.push(""));
+            bottomRow.push(grandTotalDwv.toFixed(2));
             csvData.push(bottomRow);
 
             // --- TRIGGER DOWNLOAD ---
@@ -1966,6 +1974,7 @@ const selectableCustomCodes = [
 
         } catch (err) { alert(`Export Error: ${err.message}`); }
     }
+
 
 
 
