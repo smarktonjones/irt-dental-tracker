@@ -1485,8 +1485,8 @@ const selectableCustomCodes = [
         document.getElementById('form-date').addEventListener('change', calculateNextActiveSequenceNumber);
         document.getElementById('mission-target-date').addEventListener('change', runGlobalMissionTabPipeline);
         document.getElementById('btn-export-day-matrix').addEventListener('click', downloadStructuredExcelPasteCsv);
-        document.getElementById('btn-export-personal-full').addEventListener('click', () => generateFullReport('personal'));
-        document.getElementById('btn-export-mission-full').addEventListener('click', () => generateFullReport('mission'));
+        document.getElementById('btn-export-personal-full').addEventListener('click', generatePersonalFullReport);
+        document.getElementById('btn-export-mission-full').addEventListener('click', generateMissionFullReport);
 
     }
 
@@ -1872,103 +1872,187 @@ const selectableCustomCodes = [
         } catch (err) { alert(`Export Error: ${err.message}`); }
     }
 
-    async function generateFullReport(scope) {
-        if (scope === 'personal' && !currentUserProfile) {
+
+
+        // =========================================================================
+    // NEW FUNCTION 1: Personal Full Report
+    // =========================================================================
+    async function generatePersonalFullReport() {
+        if (!currentUserProfile) {
             alert("You must be logged in to download a personal report.");
             return;
         }
 
         try {
-            let snapshot;
-            if (scope === 'personal') {
-                const q = query(collection(db, "encounters"), where("providerUid", "==", currentUserProfile.uid));
-                snapshot = await getDocs(q);
-            } else {
-                snapshot = await getDocs(collection(db, "encounters"));
-            }
+            const q = query(collection(db, "encounters"), where("providerUid", "==", currentUserProfile.uid));
+            const snapshot = await getDocs(q);
 
             let encounters = [];
             snapshot.forEach(docSnap => encounters.push(docSnap.data()));
 
             if (encounters.length === 0) {
-                alert(`No records found for the ${scope} report.`);
+                alert("No personal records found.");
                 return;
             }
 
-            // --- SORTING LOGIC ---
+            // Sort: Date (Ascending) -> Patient Sequence (Ascending)
             encounters.sort((a, b) => {
-                if (scope === 'mission') {
-                    const nameA = a.providerName || "Unknown";
-                    const nameB = b.providerName || "Unknown";
-                    if (nameA < nameB) return -1;
-                    if (nameA > nameB) return 1;
-                }
-                if (a.date < b.date) return -1;
-                if (a.date > b.date) return 1;
-                return (a.patientSequenceNum || 0) - (b.patientSequenceNum || 0);
+                const dateA = a.date || "";
+                const dateB = b.date || "";
+                if (dateA !== dateB) return dateA.localeCompare(dateB);
+                return (parseInt(a.patientSequenceNum) || 0) - (parseInt(b.patientSequenceNum) || 0);
             });
 
-            // --- START OF CORRECTED CSV BUILDING ---
-            let csvData = [];
-            const patientColumns = encounters.map(enc => ({
-                provider: `"${enc.providerName || 'Unknown'}"`,
-                date: enc.date || "",
-                ptNum: `"${enc.patientSequenceNum || 0}"`
-            }));
+            // 1. Build Header Rows exactly like the working matrix
+            let row1_Dates = ["Code", "Description", "DWV"];
+            let row2_PtNums = ["", "", ""];
 
-            // Build Header Rows
-            if (scope === 'mission') {
-                csvData.push(['Provider', '', '', ...patientColumns.map(c => c.provider)]);
-            }
-            csvData.push(['Date', '', '', ...patientColumns.map(c => c.date)]);
-            csvData.push(['Patient Record #', '', '', ...patientColumns.map(c => c.ptNum)]);
-            csvData.push(['Code', 'Description', 'DWV', ...Array(patientColumns.length).fill(''), 'Total DWV']);
+            encounters.forEach(enc => {
+                row1_Dates.push(`"${enc.date || ''}"`);
+                row2_PtNums.push(`"Pt #${enc.patientSequenceNum || 0}"`);
+            });
 
-            // --- Build Procedure Data Rows ---
+            // Add the Final Column Header
+            row1_Dates.push("Total DWV");
+            row2_PtNums.push("");
+
+            let finalCsvDataMatrix = [row1_Dates, row2_PtNums];
             let grandTotalDwv = 0;
-            const allProcedureCodes = [...masterRatesMatrix, ...selectableCustomCodes];
 
-            allProcedureCodes.forEach(matrixItem => {
-                let row = [`"${matrixItem.Code}"`, `"${matrixItem.Name}"`, matrixItem.DWV.toFixed(2)];
+            // Combine master list and custom codes to ensure nothing is missed
+            const allCodes = [...masterRatesMatrix, ...selectableCustomCodes];
+
+            // 2. Build Procedure Rows
+            allCodes.forEach(matrixItem => {
+                let currentLineRow = [matrixItem.Code, `"${matrixItem.Name}"`, matrixItem.DWV.toFixed(2)];
                 let rowTotalDwv = 0;
 
                 encounters.forEach(enc => {
-                    const procedures = enc.procedures || [];
-                    const proc = procedures.find(p => p.code === matrixItem.Code);
-                    const qty = proc ? (Number(proc.qty) || 0) : 0;
-                    row.push(qty);
+                    const procList = enc.procedures || [];
+                    const proc = procList.find(p => p.code === matrixItem.Code);
+                    const qty = proc ? (parseInt(proc.qty) || 0) : 0;
+                    
+                    currentLineRow.push(qty);
                     rowTotalDwv += (qty * matrixItem.DWV);
                 });
 
-                row.push(rowTotalDwv.toFixed(2));
-                grandTotalDwv += rowTotalDwv;
-                csvData.push(row);
+                // Only add the row if the procedure was actually performed by this provider
+                // (Optional: remove this if-statement if you want ALL rows to print even if they are 0)
+                if (rowTotalDwv > 0) {
+                    currentLineRow.push(rowTotalDwv.toFixed(2));
+                    grandTotalDwv += rowTotalDwv;
+                    finalCsvDataMatrix.push(currentLineRow);
+                }
             });
 
-            // --- Build Bottom Right Total Row ---
-            let bottomRow = ['', 'GRAND TOTAL', ''];
-            patientColumns.forEach(() => bottomRow.push('')); // Add blank cells for each patient column
+            // 3. Build Bottom Total Row
+            let bottomRow = ["", '"GRAND TOTAL"', ""];
+            encounters.forEach(() => bottomRow.push("")); // Pad under patients
             bottomRow.push(grandTotalDwv.toFixed(2));
-            csvData.push(bottomRow);
+            finalCsvDataMatrix.push(bottomRow);
 
-            // --- TRIGGER DOWNLOAD ---
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csvData.map(e => e.join(",")).join("\n");
+            // 4. Download
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + finalCsvDataMatrix.map(e => e.join(",")).join("\n");
             let encodedUri = encodeURI(csvContent);
             let link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-
-            let filename = scope === 'mission' ? 'IRT_Mission_Full_Report.csv' : `IRT_Personal_Report_${currentUserProfile.name.replace(/\s+/g, '_')}.csv`;
-            link.setAttribute("download", filename);
-
+            link.setAttribute("download", `IRT_Personal_Report_${currentUserProfile.name.replace(/\s+/g, '_')}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
-        } catch (err) {
-            console.error("Export Error:", err);
-            alert(`Export Error: ${err.message}`);
-        }
+        } catch (err) { alert(`Export Error: ${err.message}`); }
     }
+
+
+    // =========================================================================
+    // NEW FUNCTION 2: Mission Full Report
+    // =========================================================================
+    async function generateMissionFullReport() {
+        try {
+            const snapshot = await getDocs(collection(db, "encounters"));
+            let encounters = [];
+            snapshot.forEach(docSnap => encounters.push(docSnap.data()));
+
+            if (encounters.length === 0) {
+                alert("No mission records found.");
+                return;
+            }
+
+            // Sort: Provider Name -> Date -> Patient Sequence
+            encounters.sort((a, b) => {
+                const nameA = a.providerName || "Unknown";
+                const nameB = b.providerName || "Unknown";
+                if (nameA !== nameB) return nameA.localeCompare(nameB);
+                
+                const dateA = a.date || "";
+                const dateB = b.date || "";
+                if (dateA !== dateB) return dateA.localeCompare(dateB);
+                
+                return (parseInt(a.patientSequenceNum) || 0) - (parseInt(b.patientSequenceNum) || 0);
+            });
+
+            // 1. Build Header Rows
+            let row1_Providers = ["Code", "Description", "DWV"];
+            let row2_Dates = ["", "", ""];
+            let row3_PtNums = ["", "", ""];
+
+            encounters.forEach(enc => {
+                row1_Providers.push(`"${enc.providerName || 'Unknown'}"`);
+                row2_Dates.push(`"${enc.date || ''}"`);
+                row3_PtNums.push(`"Pt #${enc.patientSequenceNum || 0}"`);
+            });
+
+            row1_Providers.push("Total DWV");
+            row2_Dates.push("");
+            row3_PtNums.push("");
+
+            let finalCsvDataMatrix = [row1_Providers, row2_Dates, row3_PtNums];
+            let grandTotalDwv = 0;
+
+            const allCodes = [...masterRatesMatrix, ...selectableCustomCodes];
+
+            // 2. Build Procedure Rows
+            allCodes.forEach(matrixItem => {
+                let currentLineRow = [matrixItem.Code, `"${matrixItem.Name}"`, matrixItem.DWV.toFixed(2)];
+                let rowTotalDwv = 0;
+
+                encounters.forEach(enc => {
+                    const procList = enc.procedures || [];
+                    const proc = procList.find(p => p.code === matrixItem.Code);
+                    const qty = proc ? (parseInt(proc.qty) || 0) : 0;
+                    
+                    currentLineRow.push(qty);
+                    rowTotalDwv += (qty * matrixItem.DWV);
+                });
+
+                // Only add row if someone actually did this procedure
+                if (rowTotalDwv > 0) {
+                    currentLineRow.push(rowTotalDwv.toFixed(2));
+                    grandTotalDwv += rowTotalDwv;
+                    finalCsvDataMatrix.push(currentLineRow);
+                }
+            });
+
+            // 3. Build Bottom Total Row
+            let bottomRow = ["", '"GRAND TOTAL"', ""];
+            encounters.forEach(() => bottomRow.push(""));
+            bottomRow.push(grandTotalDwv.toFixed(2));
+            finalCsvDataMatrix.push(bottomRow);
+
+            // 4. Download
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + finalCsvDataMatrix.map(e => e.join(",")).join("\n");
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `IRT_Mission_Full_Report.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+        } catch (err) { alert(`Export Error: ${err.message}`); }
+    }
+
 
 
 
