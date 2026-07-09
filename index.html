@@ -1532,26 +1532,23 @@ const selectableCustomCodes = [
         document.getElementById('btn-toggle-auth').addEventListener('click', () => {
             isRegisterMode = !isRegisterMode;
 
-            // Get references to the registration fields
             const regFieldsDiv = document.getElementById('registration-fields');
-            const docIdInput = document.getElementById('reg-doc-id');
-            const nameInput = document.getElementById('reg-name');
-            const componentInput = document.getElementById('reg-component');
-            const regInputs = [docIdInput, nameInput, componentInput];
+            const regInputs = [
+                document.getElementById('reg-doc-id'),
+                document.getElementById('reg-name'),
+                document.getElementById('reg-component')
+            ];
 
-            // Toggle UI text and visibility
+            // Toggle UI text
             document.getElementById('auth-title').innerHTML = isRegisterMode ? '<i class="fa-solid fa-user-plus"></i> Register Provider' : '<i class="fa-solid fa-user-shield"></i> Provider Login';
-            regFieldsDiv.classList.toggle('hidden', !isRegisterMode);
             document.getElementById('btn-auth-submit').innerText = isRegisterMode ? 'Create Profile' : 'Sign In';
             document.getElementById('btn-toggle-auth').innerText = isRegisterMode ? 'Have an account? Login' : 'Need an account? Register';
-
-            // Dynamically set the 'required' attribute based on whether the form is visible
-            if (isRegisterMode) {
-                regInputs.forEach(input => input.required = true);
-            } else {
-                regInputs.forEach(input => input.required = false);
-            }
+            
+            // Toggle visibility and the 'required' property
+            regFieldsDiv.classList.toggle('hidden', !isRegisterMode);
+            regInputs.forEach(input => input.required = isRegisterMode);
         });
+
 
 
         document.getElementById('auth-form').addEventListener('submit', async (e) => {
