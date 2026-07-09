@@ -1799,7 +1799,7 @@ const selectableCustomCodes = [
             document.getElementById('form-date').value = data.date;
             document.getElementById('form-sequence-num').value = data.patientSequenceNum;
             document.getElementById('form-patient-id').value = data.patientId || "";
-            document.getElementById('form-site').value = data.site || "West OSO"; // Set the site dropdown
+            document.getElementById('form-site').value = data.site || "West Oso"; // Set the site dropdown
             
             document.getElementById('edit-target-label').innerText = `#${data.patientSequenceNum} (${data.date})`;
             document.getElementById('edit-mode-banner').classList.remove('hidden');
@@ -1838,7 +1838,7 @@ const selectableCustomCodes = [
         const snapshot = await getDocs(collection(db, "encounters"));
         
         // Define the new sites
-        const sites = ["West OSO", "Calderon"];
+        const sites = ["West Oso", "Calderon"];
         let dayStats = Object.fromEntries(sites.map(s => [s, { pts: 0, procs: 0, dwv: 0 }]));
         let globalStats = Object.fromEntries(sites.map(s => [s, { pts: 0, procs: 0, dwv: 0 }]));
 
@@ -1915,7 +1915,7 @@ const selectableCustomCodes = [
                 if(enc.date !== targetDay) return;
 
                 const idKey = enc.docId || enc.providerName || "Unknown"; // Use DOC ID as the key
-                const siteKey = enc.site || "West OSO";
+                const siteKey = enc.site || "West Oso";
                 const componentKey = enc.component || "N/A";
 
                 if (!providersMap[idKey]) {
@@ -1977,6 +1977,7 @@ const selectableCustomCodes = [
     // =========================================================================
     // FINALIZED FUNCTION 1: Personal Full Report
     // =========================================================================
+
     async function generatePersonalFullReport() {
         if (!currentUserProfile) {
             alert("You must be logged in to download a personal report.");
@@ -2003,37 +2004,29 @@ const selectableCustomCodes = [
 
             let finalCsvDataMatrix = [];
             
-            // 1. Build Header Rows (with sanitization & new fields)
-            let row1_Dates = ["Code", "Description", "DWV"];
-            let row2_Sites = ["", "Site", ""];
-            let row3_PtNums = ["", "Patient Record #", ""];
-            let row4_PtIDs = ["", "Patient ID", ""];
+            // 1. Build Header Rows
+            let header_Date = ["Date", "", ""];
+            let header_Site = ["Site", "", ""];
+            let header_PtSeq = ["Patient Record #", "", ""];
+            let header_PtID = ["Patient ID", "", ""];
 
             encounters.forEach(enc => {
-                const cleanDate = String(enc.date || '').replace(/[\r\n]+/g, ' ').trim();
-                const cleanSite = String(enc.site || '').replace(/[\r\n]+/g, ' ').trim();
-                const cleanSeq = String(enc.patientSequenceNum || 0).replace(/[\r\n]+/g, ' ').trim();
-                const cleanPtId = String(enc.patientId || '').replace(/[\r\n]+/g, ' ').trim();
-
-                row1_Dates.push(`"${cleanDate}"`);
-                row2_Sites.push(`"${cleanSite}"`);
-                row3_PtNums.push(`"Pt #${cleanSeq}"`);
-                row4_PtIDs.push(`"${cleanPtId}"`);
+                header_Date.push(`"${String(enc.date || '').replace(/[\r\n]+/g, ' ').trim()}"`);
+                header_Site.push(`"${String(enc.site || '').replace(/[\r\n]+/g, ' ').trim()}"`);
+                header_PtSeq.push(`"${String(enc.patientSequenceNum || 0).replace(/[\r\n]+/g, ' ').trim()}"`);
+                header_PtID.push(`"${String(enc.patientId || '').replace(/[\r\n]+/g, ' ').trim()}"`);
             });
 
-            row1_Dates.push("Total DWV");
-            row2_Sites.push("");
-            row3_PtNums.push("");
-            row4_PtIDs.push("");
-
-            finalCsvDataMatrix.push(row1_Dates, row2_Sites, row3_PtNums, row4_PtIDs);
+            // Add the "Total DWV" column header
+            const header_Code = ["Code", "Description", "DWV", ...Array(encounters.length).fill(''), "Total DWV"];
+            
+            finalCsvDataMatrix.push(header_Date, header_Site, header_PtSeq, header_PtID, header_Code);
             let grandTotalDwv = 0;
 
-            // Create a de-duplicated list of all possible codes
             const combinedCodes = [...masterRatesMatrix, ...selectableCustomCodes];
             const allCodes = Array.from(new Map(combinedCodes.map(item => [item.Code, item])).values());
 
-            // 2. Build Procedure Rows (with sanitization)
+            // 2. Build Procedure Rows
             allCodes.forEach(matrixItem => {
                 const cleanDesc = String(matrixItem.Name).replace(/[\r\n]+/g, ' ').trim();
                 let currentLineRow = [matrixItem.Code, `"${cleanDesc}"`, matrixItem.DWV.toFixed(2)];
@@ -2061,8 +2054,9 @@ const selectableCustomCodes = [
             finalCsvDataMatrix.push(bottomRow);
 
             // 4. Show On-Screen Preview & Enable Secure Download
-            let filename = `IRT_Personal_Report_${currentUserProfile.name.replace(/\s+/g, '_')}.csv`;
-            showReportPreview(finalCsvDataMatrix, filename, "Personal Full Report", 4);
+            let filename = `IRT_Personal_Report_${currentUserProfile.docId || currentUserProfile.name.replace(/\s+/g, '_')}.csv`;
+            // NOTE: We pass '5' here because there are 5 header rows to style gray
+            showReportPreview(finalCsvDataMatrix, filename, "Personal Full Report", 5); 
 
         } catch (err) { alert(`Export Error: ${err.message}`); }
     }
@@ -2081,11 +2075,11 @@ const selectableCustomCodes = [
                 return;
             }
 
-            // Sort: Provider Name -> Date -> Patient Sequence
+            // Sort: DOC ID -> Date -> Patient Sequence
             encounters.sort((a, b) => {
-                const nameA = a.providerName || "Unknown";
-                const nameB = b.providerName || "Unknown";
-                if (nameA !== nameB) return nameA.localeCompare(nameB);
+                const idA = a.docId || a.providerName || "Unknown";
+                const idB = b.docId || b.providerName || "Unknown";
+                if (idA !== idB) return idA.localeCompare(idB);
                 
                 const dateA = a.date || "";
                 const dateB = b.date || "";
@@ -2094,41 +2088,34 @@ const selectableCustomCodes = [
                 return (parseInt(a.patientSequenceNum) || 0) - (parseInt(b.patientSequenceNum) || 0);
             });
 
-            // 1. Build Header Rows (with sanitization & new fields)
-            let row1_Providers = ["Code", "Description", "DWV"];
-            let row2_Dates = ["", "Date", ""];
-            let row3_Sites = ["", "Site", ""];
-            let row4_PtNums = ["", "Patient Record #", ""];
-            let row5_PtIDs = ["", "Patient ID", ""];
+            let finalCsvDataMatrix = [];
+            
+            // 1. Build Header Rows with DOC ID & Component
+            let header_DocID = ["DOC ID", "", ""];
+            let header_Component = ["Component", "", ""];
+            let header_Date = ["Date", "", ""];
+            let header_Site = ["Site", "", ""];
+            let header_PtSeq = ["Patient Record #", "", ""];
+            let header_PtID = ["Patient ID", "", ""];
 
             encounters.forEach(enc => {
-                const cleanName = String(enc.providerName || 'Unknown').replace(/[\r\n]+/g, ' ').trim();
-                const cleanDate = String(enc.date || '').replace(/[\r\n]+/g, ' ').trim();
-                const cleanSite = String(enc.site || '').replace(/[\r\n]+/g, ' ').trim();
-                const cleanSeq = String(enc.patientSequenceNum || 0).replace(/[\r\n]+/g, ' ').trim();
-                const cleanPtId = String(enc.patientId || '').replace(/[\r\n]+/g, ' ').trim();
-                
-                row1_Providers.push(`"${cleanName}"`);
-                row2_Dates.push(`"${cleanDate}"`);
-                row3_Sites.push(`"${cleanSite}"`);
-                row4_PtNums.push(`"Pt #${cleanSeq}"`);
-                row5_PtIDs.push(`"${cleanPtId}"`);
+                header_DocID.push(`"${String(enc.docId || enc.providerName || 'N/A').replace(/[\r\n]+/g, ' ').trim()}"`);
+                header_Component.push(`"${String(enc.component || enc.serviceBranch || 'N/A').replace(/[\r\n]+/g, ' ').trim()}"`);
+                header_Date.push(`"${String(enc.date || '').replace(/[\r\n]+/g, ' ').trim()}"`);
+                header_Site.push(`"${String(enc.site || '').replace(/[\r\n]+/g, ' ').trim()}"`);
+                header_PtSeq.push(`"${String(enc.patientSequenceNum || 0).replace(/[\r\n]+/g, ' ').trim()}"`);
+                header_PtID.push(`"${String(enc.patientId || '').replace(/[\r\n]+/g, ' ').trim()}"`);
             });
-
-            row1_Providers.push("Total DWV");
-            row2_Dates.push("");
-            row3_Sites.push("");
-            row4_PtNums.push("");
-            row5_PtIDs.push("");
-
-            let finalCsvDataMatrix = [row1_Providers, row2_Dates, row3_Sites, row4_PtNums, row5_PtIDs];
+            
+            const header_Code = ["Code", "Description", "DWV", ...Array(encounters.length).fill(''), "Total DWV"];
+            
+            finalCsvDataMatrix.push(header_DocID, header_Component, header_Date, header_Site, header_PtSeq, header_PtID, header_Code);
             let grandTotalDwv = 0;
 
-            // Create a de-duplicated list of all possible codes
             const combinedCodes = [...masterRatesMatrix, ...selectableCustomCodes];
             const allCodes = Array.from(new Map(combinedCodes.map(item => [item.Code, item])).values());
 
-            // 2. Build Procedure Rows (with sanitization)
+            // 2. Build Procedure Rows
             allCodes.forEach(matrixItem => {
                 const cleanDesc = String(matrixItem.Name).replace(/[\r\n]+/g, ' ').trim();
                 let currentLineRow = [matrixItem.Code, `"${cleanDesc}"`, matrixItem.DWV.toFixed(2)];
@@ -2156,10 +2143,12 @@ const selectableCustomCodes = [
             finalCsvDataMatrix.push(bottomRow);
 
             // 4. Show On-Screen Preview & Enable Secure Download
-            showReportPreview(finalCsvDataMatrix, `IRT_Mission_Full_Report.csv`, "Mission Full Report", 5);
+            // NOTE: We pass '7' here because there are 7 header rows to style gray
+            showReportPreview(finalCsvDataMatrix, `IRT_Mission_Full_Report.csv`, "Mission Full Report", 7); 
 
         } catch (err) { alert(`Export Error: ${err.message}`); }
     }
+
 
     // =========================================================================
     // ON-SCREEN PREVIEW & SECURE CSV DOWNLOAD
