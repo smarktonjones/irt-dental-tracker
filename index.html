@@ -1939,7 +1939,10 @@ const selectableCustomCodes = [
             finalCsvDataMatrix.push(row1_Dates, row2_PtNums);
             let grandTotalDwv = 0;
 
-            const allCodes = [...masterRatesMatrix, ...selectableCustomCodes];
+                        // Create a de-duplicated list of all possible codes
+            const combinedCodes = [...masterRatesMatrix, ...selectableCustomCodes];
+            const allCodes = Array.from(new Map(combinedCodes.map(item => [item.Code, item])).values());
+
 
             // 2. Build Procedure Rows (with sanitization)
             allCodes.forEach(matrixItem => {
@@ -2025,7 +2028,10 @@ const selectableCustomCodes = [
             let finalCsvDataMatrix = [row1_Providers, row2_Dates, row3_PtNums];
             let grandTotalDwv = 0;
 
-            const allCodes = [...masterRatesMatrix, ...selectableCustomCodes];
+                        // Create a de-duplicated list of all possible codes
+            const combinedCodes = [...masterRatesMatrix, ...selectableCustomCodes];
+            const allCodes = Array.from(new Map(combinedCodes.map(item => [item.Code, item])).values());
+
 
             // 2. Build Procedure Rows (with sanitization)
             allCodes.forEach(matrixItem => {
