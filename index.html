@@ -2045,6 +2045,66 @@ const selectableCustomCodes = [
     }
 
 
+    // =========================================================================
+    // ON-SCREEN PREVIEW & SECURE CSV DOWNLOAD
+    // =========================================================================
+    window.showReportPreview = function(matrix, filename, title) {
+        const existing = document.getElementById('report-preview-modal');
+        if(existing) existing.remove();
+
+        let html = `
+        <div id="report-preview-modal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:9999; padding:20px; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+            <div style="background:#fff; padding:20px; border-radius:8px; width:95%; max-width:1200px; max-height:90vh; display:flex; flex-direction:column;">
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; flex-shrink: 0;">
+                    <h2 style="margin:0; color:var(--primary);"><i class="fa-solid fa-table"></i> ${title} Preview</h2>
+                    <div>
+                        <button id="btn-modal-download" class="btn btn-primary" style="margin-right: 10px; background-color: #10b981;"><i class="fa-solid fa-download"></i> Download CSV</button>
+                        <button class="btn btn-secondary" onclick="document.getElementById('report-preview-modal').remove()"><i class="fa-solid fa-xmark"></i> Close</button>
+                    </div>
+                </div>
+                
+                <div style="overflow:auto; border: 1px solid #cbd5e1; flex: 1;">
+                    <table border="1" style="width:100%; border-collapse:collapse; font-size:0.8rem; text-align:center;">`;
+        
+        // Render the array to the HTML table
+        matrix.forEach((row, rIdx) => {
+            html += "<tr>";
+            row.forEach(cell => {
+                // Strip the surrounding quotes for the clean on-screen display
+                let displayCell = String(cell).replace(/^"|"$/g, ''); 
+                // Use different tags for headers vs data for semantic HTML
+                const tag = rIdx < 3 ? 'th' : 'td';
+                const style = rIdx < 3 ? 'background:#e2e8f0; padding:8px; border:1px solid #cbd5e1; position:sticky; top:0; z-index:10;' : 'padding:6px; border:1px solid #cbd5e1;';
+                
+                html += `<${tag} style="${style}">${displayCell}</${tag}>`;
+            });
+            html += "</tr>";
+        });
+
+        html += `</table></div></div></div>`;
+        document.body.insertAdjacentHTML('beforeend', html);
+
+        // Attach the secure Blob download to the new button inside the modal
+        document.getElementById('btn-modal-download').addEventListener('click', () => {
+            // Join the matrix into CSV format, ensuring commas are handled correctly within quoted fields
+            let csvContent = "\uFEFF" + matrix.map(e => e.join(",")).join("\n");
+            
+            // Use a Blob to bypass all URL character limits (#, &, etc.)
+            let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            let url = URL.createObjectURL(blob);
+            
+            let link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up memory after the download is initiated
+            URL.revokeObjectURL(url); 
+        });
+    }
 
 
 
