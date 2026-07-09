@@ -1368,12 +1368,28 @@ const selectableCustomCodes = [
     }
     
     // Handles loading favorites from Firestore
+    // Handles loading favorites from Firestore AND restoring custom injected codes
     async function loadUserFavorites(uid) {
         try {
             const userDoc = await getDoc(doc(db, "users", uid));
             if (userDoc.exists() && userDoc.data().favoriteCodes) {
-                // Failsafe: Filter out any favorites that no longer exist in the master list
-                userFavoriteCodes = userDoc.data().favoriteCodes.filter(code => masterRatesMatrix.some(item => item.Code === code));
+                const savedFavs = userDoc.data().favoriteCodes;
+                
+                // --- NEW LOGIC: Restore custom injected favorites ---
+                savedFavs.forEach(savedCode => {
+                    // If it's a favorite, but NOT in the standard master list...
+                    if (!masterRatesMatrix.some(item => item.Code === savedCode)) {
+                        // ...check if it exists in the extended library...
+                        const customCodeObj = selectableCustomCodes.find(item => item.Code === savedCode);
+                        if (customCodeObj) {
+                            // ...and if found, automatically re-inject it for this session!
+                            masterRatesMatrix.push(customCodeObj);
+                        }
+                    }
+                });
+                
+                // Now, safely filter the favorites list against the *updated* masterRatesMatrix
+                userFavoriteCodes = savedFavs.filter(code => masterRatesMatrix.some(item => item.Code === code));
             } else {
                 userFavoriteCodes = [];
             }
@@ -1382,6 +1398,7 @@ const selectableCustomCodes = [
             userFavoriteCodes = [];
         }
     }
+
 
     // Toggles a code's favorite status
     window.toggleFavorite = function(code) {
