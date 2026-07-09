@@ -1605,7 +1605,8 @@ const selectableCustomCodes = [
             if (userDoc.exists()) {
                 currentUserProfile = userDoc.data();
                 document.getElementById('user-display-name').innerText = currentUserProfile.name;
-                document.getElementById('user-display-meta').innerText = `${currentUserProfile.site} • ${currentUserProfile.branch}`;
+                document.getElementById('user-display-meta').innerText = `Default Site: ${currentUserProfile.site} • ${currentUserProfile.component}`;
+
                 
                 // New: Load favorites and then render the app
                 await loadUserFavorites(user.uid);
