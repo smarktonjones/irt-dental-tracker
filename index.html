@@ -105,23 +105,40 @@
                 <input type="password" id="auth-password" required placeholder="••••••••">
             </div>
             
+            <!-- START REPLACEMENT: Registration Fields -->
             <div id="registration-fields" class="hidden">
                 <div class="form-group">
-                    <label>Full Name / Rank Name (e.g. CAPT Horning)</label>
-                    <input type="text" id="reg-name" placeholder="CAPT Horning">
+                    <label>Select Your Profile</label>
+                    <select id="reg-prefill-selector">
+                        <option value="">-- Select Pre-loaded Profile --</option>
+                        <option value="MANUAL">Custom / Manual Entry</option>
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label>Service Branch Code (e.g. USNR)</label>
-                    <input type="text" id="reg-branch" placeholder="USNR" style="text-transform: uppercase;">
+                    <label>DOC ID</label>
+                    <input type="text" id="reg-doc-id" placeholder="e.g., DDS1" required>
                 </div>
                 <div class="form-group">
-                    <label>Assigned Duty Site Location</label>
+                    <label>Display Name (e.g., O6 Horning)</label>
+                    <input type="text" id="reg-name" placeholder="O6 Horning" required>
+                </div>
+                <div class="form-group">
+                    <label>Component (Branch)</label>
+                    <input type="text" id="reg-component" placeholder="e.g., USNR" required>
+                </div>
+                <div class="form-group">
+                    <label>Default Duty Site</label>
                     <select id="reg-site">
                         <option value="West Oso">West Oso</option>
                         <option value="Calderon">Calderon</option>
                     </select>
                 </div>
             </div>
+            <!-- END REPLACEMENT -->
+
+
+
+            
             <button type="submit" class="btn btn-primary" id="btn-auth-submit">Sign In</button>
         </form>
         <div style="text-align: center; margin-top: 14px;">
@@ -170,6 +187,16 @@
                     </div>
                 </div>
 
+                <!-- SITE SELECTOR FOR THE ENCOUNTER -->
+                <div class="form-group">
+                    <label>Encounter Site</label>
+                    <select id="form-site">
+                        <option value="West Oso">West Oso</option>
+                        <option value="Calderon">Calderon</option>
+                    </select>
+                </div>
+
+                
                 <div class="search-sticky">
                     <label style="font-weight:600;"><i class="fa-solid fa-filter"></i> Direct Search / Add Code from full DHA list</label>
                     <input type="text" id="search-code" placeholder="Type to filter matrix or add custom code..." oninput="filterCodeMatrix()">
@@ -294,6 +321,29 @@
     let userFavoriteCodes = [];
     let sortableInstance = null;
 
+    // =========================================================================
+    //  PRELOADED PROVIDER ROSTER
+    // =========================================================================
+    const preloadedProviders = [
+        { docId: "DDS1", lastName: "Conklin", rank: "O4", component: "ANG" },
+        { docId: "DDS2", lastName: "Harmon", rank: "O5", component: "ANG" },
+        { docId: "DDS3", lastName: "Kim", rank: "O4", component: "USAF" },
+        { docId: "DDS4", lastName: "Merchant", rank: "O5", component: "USAF" },
+        { docId: "DDS5", lastName: "Rasmussen", rank: "O5", component: "USAF" },
+        { docId: "DDS6", lastName: "Robbins", rank: "O3", component: "USAF" },
+        { docId: "DDS7", lastName: "Tran", rank: "O3", component: "USAF" },
+        { docId: "DDS8", lastName: "Hoppe", rank: "O5", component: "USMC" },
+        { docId: "DDS9", lastName: "Horning", rank: "O6", component: "USMC" },
+        { docId: "DDS10", lastName: "Ocasio", rank: "O4", component: "USMC" },
+        { docId: "DDS11", lastName: "Phan", rank: "O5", component: "USMC" },
+        { docId: "DDS12", lastName: "Wilson", rank: "O5", component: "USMC" },
+        { docId: "DDS13", lastName: "Hoang", rank: "O4", component: "USNR" },
+        { docId: "DDS14", lastName: "Sundaresan", rank: "O3", component: "USNR" },
+        { docId: "DDS15", lastName: "Villaluz", rank: "O5", component: "USMC" }
+    ];
+
+
+    
     // Explicit 73-Row Ordered Master Matrix
         const masterRatesMatrix = [
         {Code: "W9999", Name: "Patient Seating (Encounter)", DWV: 0.00},
@@ -1439,7 +1489,46 @@ const selectableCustomCodes = [
 
 
 
+    // bindUIEvent FUNCTION
     function bindUIEvents() {
+        // --- NEW: Populate and handle the Preloaded Provider Dropdown ---
+        const prefillSelect = document.getElementById('reg-prefill-selector');
+        preloadedProviders.forEach(p => {
+            let opt = document.createElement('option');
+            opt.value = p.docId;
+            opt.text = `${p.docId} - ${p.rank} ${p.lastName}`;
+            prefillSelect.appendChild(opt);
+        });
+
+        prefillSelect.addEventListener('change', (e) => {
+            const val = e.target.value;
+            const docIdInput = document.getElementById('reg-doc-id');
+            const nameInput = document.getElementById('reg-name');
+            const componentInput = document.getElementById('reg-component');
+            
+            const fields = [docIdInput, nameInput, componentInput];
+
+            if (val === 'MANUAL' || val === '') {
+                fields.forEach(f => {
+                    f.value = '';
+                    f.readOnly = false;
+                    f.style.backgroundColor = '#fff';
+                });
+            } else {
+                const profile = preloadedProviders.find(p => p.docId === val);
+                if(profile) {
+                    docIdInput.value = profile.docId;
+                    nameInput.value = `${profile.rank} ${profile.lastName}`;
+                    componentInput.value = profile.component;
+                    
+                    fields.forEach(f => {
+                        f.readOnly = true;
+                        f.style.backgroundColor = '#e2e8f0';
+                    });
+                }
+            }
+        });
+
         document.getElementById('btn-toggle-auth').addEventListener('click', () => {
             isRegisterMode = !isRegisterMode;
             document.getElementById('auth-title').innerHTML = isRegisterMode ? '<i class="fa-solid fa-user-plus"></i> Register Provider' : '<i class="fa-solid fa-user-shield"></i> Provider Login';
@@ -1454,11 +1543,27 @@ const selectableCustomCodes = [
             const password = document.getElementById('auth-password').value;
             try {
                 if (isRegisterMode) {
-                    const name = document.getElementById('reg-name').value || "Doctor";
-                    const branch = document.getElementById('reg-branch').value.toUpperCase() || "USNR";
+                    // Get values from the form
+                    const docId = document.getElementById('reg-doc-id').value.trim();
+                    const name = document.getElementById('reg-name').value.trim();
+                    const component = document.getElementById('reg-component').value.trim();
                     const site = document.getElementById('reg-site').value;
+                    
+                    if (!docId || !name || !component) {
+                        alert("Please fill out all provider fields.");
+                        return;
+                    }
+                    
                     const cred = await createUserWithEmailAndPassword(auth, email, password);
-                    await setDoc(doc(db, "users", cred.user.uid), { uid: cred.user.uid, name, branch, site, role: 'doctor' });
+                    // Save the new, standardized user profile to Firestore
+                    await setDoc(doc(db, "users", cred.user.uid), { 
+                        uid: cred.user.uid, 
+                        docId: docId,
+                        name: name, 
+                        component: component, 
+                        site: site, // This is their default site
+                        role: 'doctor' 
+                    });
                 } else {
                     await signInWithEmailAndPassword(auth, email, password);
                 }
@@ -1467,50 +1572,31 @@ const selectableCustomCodes = [
 
         document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
-    
-        // Find this in bindUIEvents() and replace it
         document.getElementById('btn-add-custom-code').addEventListener('click', () => {
             const selector = document.getElementById('custom-code-selector');
             const selectedCode = selector.value;
-
-            if (!selectedCode) {
-                alert("Please select a valid code from the dropdown to inject.");
-                return;
-            }
-            
-            // Find the full procedure object from our new custom codes list
+            if (!selectedCode) { alert("Please select a valid code to inject."); return; }
             const codeToAdd = selectableCustomCodes.find(item => item.Code === selectedCode);
-
-            if (!codeToAdd) {
-                alert("Could not find the selected code. Please try again.");
-                return;
-            }
-
-            // Add the selected procedure to the main master list
+            if (!codeToAdd) { alert("Could not find the selected code."); return; }
+            if (masterRatesMatrix.some(item => item.Code === selectedCode)) { alert("This code already exists."); return; }
             masterRatesMatrix.push(codeToAdd);
-
-            // Set its count to 1 for the current encounter
             currentEncounterData[codeToAdd.Code] = 1;
-
-            // Clear the search and hide the override box
             document.getElementById('search-code').value = "";
             document.getElementById('custom-override-fields').classList.add('hidden');
-
-            // Re-render the UI and clear the filter
             buildCodeMatrixLayout();
             filterCodeMatrix();
         });
-
-    
 
         document.getElementById('btn-submit-encounter').addEventListener('click', saveCurrentEncounterData);
         document.getElementById('form-date').addEventListener('change', calculateNextActiveSequenceNumber);
         document.getElementById('mission-target-date').addEventListener('change', runGlobalMissionTabPipeline);
         document.getElementById('btn-export-day-matrix').addEventListener('click', downloadStructuredExcelPasteCsv);
-        document.getElementById('btn-export-personal-full').addEventListener('click', generatePersonalFullReport);
-        document.getElementById('btn-export-mission-full').addEventListener('click', generateMissionFullReport);
-
+        document.getElementById('btn-export-personal-full').addEventListener('click', () => generatePersonalFullReport('personal'));
+        document.getElementById('btn-export-mission-full').addEventListener('click', () => generateMissionFullReport('mission'));
     }
+
+
+    
 
 
     onAuthStateChanged(auth, async (user) => {
@@ -1579,38 +1665,27 @@ const selectableCustomCodes = [
         resetEncounterFormState();
     };
 
+
     async function saveCurrentEncounterData() {
         const date = document.getElementById('form-date').value;
         const seqNum = parseInt(document.getElementById('form-sequence-num').value);
         const patientId = document.getElementById('form-patient-id').value.trim();
-        
+        const encounterSite = document.getElementById('form-site').value; // Get site from the form
+
         const finalizedProcedures = [];
         Object.keys(currentEncounterData).forEach(code => {
             const qty = currentEncounterData[code];
             if(qty > 0) {
-                let matched = masterRatesMatrix.find(m => m.Code === code);
+                const allCodes = [...masterRatesMatrix, ...selectableCustomCodes];
+                let matched = allCodes.find(m => m.Code === code);
                 let desc = matched ? matched.Name : "Custom Added Procedure";
                 let weight = matched ? matched.DWV : 0.0;
                 
-                const injectedRow = document.getElementById(`row-${code}`);
-                if(!matched && injectedRow) {
-                    desc = injectedRow.querySelector('.counter-desc').innerText.split(" (DWV:")[0];
-                }
-
-                finalizedProcedures.push({
-                    code,
-                    description: desc,
-                    qty: qty,
-                    dwv: weight,
-                    totalValue: (qty * weight * 115.71)
-                });
+                finalizedProcedures.push({ code, description: desc, qty, dwv: weight, totalValue: (qty * weight * 115.71) });
             }
         });
 
-        if(finalizedProcedures.length === 0) {
-            alert("Cannot commit transaction: Log at least 1 procedure.");
-            return;
-        }
+        if (finalizedProcedures.length === 0) { alert("Log at least 1 procedure."); return; }
 
         const payload = {
             date,
@@ -1618,10 +1693,11 @@ const selectableCustomCodes = [
             patientId: patientId,
             providerUid: currentUserProfile.uid,
             providerName: currentUserProfile.name,
-            serviceBranch: currentUserProfile.branch,
-            site: currentUserProfile.site,
-            procedures: finalizedProcedures,
-            timestamp: new Date().toISOString()
+            docId: currentUserProfile.docId, // Add DOC ID
+            component: currentUserProfile.component, // Add Component
+            site: encounterSite, // Use the site from the form
+            timestamp: new Date().toISOString(),
+            procedures: finalizedProcedures
         };
 
         try {
@@ -1635,6 +1711,7 @@ const selectableCustomCodes = [
             resetEncounterFormState();
         } catch(err) { alert(`Write Failure: ${err.message}`); }
     }
+
 
     async function loadPersonalProviderMetricsDashboard() {
         if(!currentUserProfile) return;
@@ -1709,6 +1786,7 @@ const selectableCustomCodes = [
     }
 
 
+    // REPLACE THIS ENTIRE FUNCTION
     window.loadEncounterForActiveEditing = async function(docId) {
         try {
             const snap = await getDoc(doc(db, "encounters", docId));
@@ -1721,18 +1799,22 @@ const selectableCustomCodes = [
             document.getElementById('form-date').value = data.date;
             document.getElementById('form-sequence-num').value = data.patientSequenceNum;
             document.getElementById('form-patient-id').value = data.patientId || "";
+            document.getElementById('form-site').value = data.site || "West OSO"; // Set the site dropdown
             
             document.getElementById('edit-target-label').innerText = `#${data.patientSequenceNum} (${data.date})`;
             document.getElementById('edit-mode-banner').classList.remove('hidden');
 
             document.querySelectorAll('.count-val').forEach(el => el.innerText = "0");
 
-            data.procedures.forEach(p => {
+            (data.procedures || []).forEach(p => {
                 currentEncounterData[p.code] = p.qty;
                 if (!document.getElementById(`cnt-${p.code}`)) {
-                    const container = document.getElementById('matrix-scroll-container');
-                    const element = createMatrixRowDOM(p.code, p.description, p.dwv);
-                    container.insertBefore(element, container.firstChild);
+                    const allCodes = [...masterRatesMatrix, ...selectableCustomCodes];
+                    const item = allCodes.find(c => c.Code === p.code);
+                    if (item) {
+                       const element = createMatrixRowDOM(item, userFavoriteCodes.includes(p.code));
+                       document.getElementById('all-codes-list').insertBefore(element, document.getElementById('all-codes-list').firstChild);
+                    }
                 }
                 document.getElementById(`cnt-${p.code}`).innerText = p.qty;
             });
@@ -1741,32 +1823,33 @@ const selectableCustomCodes = [
         } catch(err) { alert(`Error Loading Record: ${err.message}`); }
     };
 
+
+    
+
     /* =========================================================================
        MISSION BREAKDOWN LOGIC AND HORIZONTAL SPREADSHEET STRUCTURAL INTERACTION
        ========================================================================= */
+
+ 
     async function runGlobalMissionTabPipeline() {
         const selectedDay = document.getElementById('mission-target-date').value;
         document.getElementById('lbl-mission-day-title').innerText = `Target Day Breakdown: ${selectedDay}`;
 
         const snapshot = await getDocs(collection(db, "encounters"));
         
-        let dayStats = {
-            "West Oso": { pts: 0, procs: 0, dwv: 0 },
-            "Calderon": { pts: 0, procs: 0, dwv: 0 }
-        };
-        let globalStats = {
-            "West Oso": { pts: 0, procs: 0, dwv: 0 },
-            "Calderon": { pts: 0, procs: 0, dwv: 0 }
-        };
+        // Define the new sites
+        const sites = ["West OSO", "Calderon"];
+        let dayStats = Object.fromEntries(sites.map(s => [s, { pts: 0, procs: 0, dwv: 0 }]));
+        let globalStats = Object.fromEntries(sites.map(s => [s, { pts: 0, procs: 0, dwv: 0 }]));
 
         snapshot.forEach(docSnap => {
             const enc = docSnap.data();
-            const siteKey = enc.site || "West Oso";
-            if(!globalStats[siteKey]) return;
+            const siteKey = enc.site;
+            if (!siteKey || !globalStats[siteKey]) return; // Skip if site is unknown
 
             let encProcs = 0;
             let encDwv = 0;
-            enc.procedures.forEach(p => {
+            (enc.procedures || []).forEach(p => {
                 encProcs += p.qty;
                 encDwv += (p.qty * p.dwv);
             });
@@ -1786,7 +1869,7 @@ const selectableCustomCodes = [
 
         // Populate Day Breakdown UI
         let dayHtml = "";
-        Object.keys(dayStats).forEach(site => {
+        sites.forEach(site => {
             dayHtml += `
                 <div class="site-block-summary">
                     <div class="site-block-title">${site}</div>
@@ -1801,7 +1884,7 @@ const selectableCustomCodes = [
 
         // Populate Cumulative Breakdown UI
         let globalHtml = "";
-        Object.keys(globalStats).forEach(site => {
+        sites.forEach(site => {
             globalHtml += `
                 <div class="site-block-summary">
                     <div class="site-block-title">${site}</div>
@@ -1815,6 +1898,10 @@ const selectableCustomCodes = [
         document.getElementById('container-mission-global-breakdown').innerHTML = globalHtml;
     }
 
+
+    
+
+    // REPLACE THIS ENTIRE FUNCTION
     async function downloadStructuredExcelPasteCsv() {
         const targetDay = document.getElementById('mission-target-date').value;
         if(!targetDay) { alert("Please select a target date."); return; }
@@ -1827,60 +1914,48 @@ const selectableCustomCodes = [
                 const enc = docSnap.data();
                 if(enc.date !== targetDay) return;
 
-                const nameKey = enc.providerName || "Unknown Provider";
-                const siteKey = enc.site || "West Oso";
-                const branchKey = enc.serviceBranch || "USNR";
+                const idKey = enc.docId || enc.providerName || "Unknown"; // Use DOC ID as the key
+                const siteKey = enc.site || "West OSO";
+                const componentKey = enc.component || "N/A";
 
-                if (!providersMap[nameKey]) {
-                    providersMap[nameKey] = {
-                        name: nameKey,
-                        branch: branchKey,
+                if (!providersMap[idKey]) {
+                    providersMap[idKey] = {
+                        name: idKey, // Store the DOC ID here
+                        component: componentKey,
                         site: siteKey,
                         tallies: {}
                     };
                 }
 
-                enc.procedures.forEach(p => {
-                    if(!providersMap[nameKey].tallies[p.code]) providersMap[nameKey].tallies[p.code] = 0;
-                    providersMap[nameKey].tallies[p.code] += p.qty;
+                (enc.procedures || []).forEach(p => {
+                    if(!providersMap[idKey].tallies[p.code]) providersMap[idKey].tallies[p.code] = 0;
+                    providersMap[idKey].tallies[p.code] += p.qty;
                 });
             });
 
             let sortedProviders = Object.values(providersMap);
-            if(sortedProviders.length === 0) {
-                alert(`No records found logged for ${targetDay}.`);
-                return;
-            }
+            if(sortedProviders.length === 0) { alert(`No records found for ${targetDay}.`); return; }
 
-            // Sorting Priorities: Site Sequence (1 -> 2 -> 3), then Alphabetical Provider Names
-            sortedProviders.sort((a, b) => {
-                if (a.site !== b.site) return a.site.localeCompare(b.site);
-                return a.name.localeCompare(b.name);
-            });
+            sortedProviders.sort((a, b) => a.name.localeCompare(b.name)); // Sort by DOC ID
 
-            // Construct 1-to-1 Excel alignment grid row headers with the new DWV column
-            let row1_Names = ["Code Field Header", "Description Label", "DWV"]; // Row 92
-            let row2_Branches = ["", "", ""];                              // Row 93
-            let row3_Sites = ["", "", ""];                                 // Row 94
+            let row1_Ids = ["Code", "Description", "DWV"];
+            let row2_Components = ["", "", ""];
+            let row3_Sites = ["", "", ""];
 
             sortedProviders.forEach(p => {
-                row1_Names.push(`"${p.name}"`);
-                row2_Branches.push(`"${p.branch}"`);
+                row1_Ids.push(`"${p.name}"`); // This is now the DOC ID
+                row2_Components.push(`"${p.component}"`);
                 row3_Sites.push(`"${p.site}"`);
             });
 
-            let finalCsvDataMatrix = [row1_Names, row2_Branches, row3_Sites];
+            let finalCsvDataMatrix = [row1_Ids, row2_Components, row3_Sites];
 
-            // Map standard procedure layout tracking rows, now including the DWV
             masterRatesMatrix.forEach(matrixItem => {
-                // Add Code, Name, and the new DWV value to the start of the row
                 let currentLineRow = [matrixItem.Code, `"${matrixItem.Name}"`, matrixItem.DWV.toFixed(2)];
-                
                 sortedProviders.forEach(p => {
                     const totalTally = p.tallies[matrixItem.Code] || 0;
                     currentLineRow.push(totalTally);
                 });
-
                 finalCsvDataMatrix.push(currentLineRow);
             });
 
@@ -1895,6 +1970,7 @@ const selectableCustomCodes = [
 
         } catch (err) { alert(`Export Error: ${err.message}`); }
     }
+
 
 
 
