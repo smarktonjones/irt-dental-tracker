@@ -1974,12 +1974,8 @@ const selectableCustomCodes = [
             let encounters = [];
             snapshot.forEach(docSnap => encounters.push(docSnap.data()));
 
-            if (encounters.length === 0) {
-                alert("No mission records found.");
-                return;
-            }
+            if (encounters.length === 0) { alert("No mission records found."); return; }
 
-            // Sort: Provider Name -> Date -> Patient Sequence
             encounters.sort((a, b) => {
                 const nameA = a.providerName || "Unknown";
                 const nameB = b.providerName || "Unknown";
@@ -1992,15 +1988,19 @@ const selectableCustomCodes = [
                 return (parseInt(a.patientSequenceNum) || 0) - (parseInt(b.patientSequenceNum) || 0);
             });
 
-            // 1. Build Header Rows
             let row1_Providers = ["Code", "Description", "DWV"];
             let row2_Dates = ["", "", ""];
             let row3_PtNums = ["", "", ""];
 
+            // SANITIZATION: We strip \r and \n from strings to prevent CSV breaks!
             encounters.forEach(enc => {
-                row1_Providers.push(`"${enc.providerName || 'Unknown'}"`);
-                row2_Dates.push(`"${enc.date || ''}"`);
-                row3_PtNums.push(`"Pt #${enc.patientSequenceNum || 0}"`);
+                const cleanName = String(enc.providerName || 'Unknown').replace(/[\r\n]+/g, ' ').trim();
+                const cleanDate = String(enc.date || '').replace(/[\r\n]+/g, '').trim();
+                const cleanSeq = String(enc.patientSequenceNum || 0).replace(/[\r\n]+/g, '').trim();
+
+                row1_Providers.push(`"${cleanName}"`);
+                row2_Dates.push(`"${cleanDate}"`);
+                row3_PtNums.push(`"Pt #${cleanSeq}"`);
             });
 
             row1_Providers.push("Total DWV");
@@ -2009,12 +2009,12 @@ const selectableCustomCodes = [
 
             let finalCsvDataMatrix = [row1_Providers, row2_Dates, row3_PtNums];
             let grandTotalDwv = 0;
-
             const allCodes = [...masterRatesMatrix, ...selectableCustomCodes];
 
-            // 2. Build Procedure Rows
             allCodes.forEach(matrixItem => {
-                let currentLineRow = [matrixItem.Code, `"${matrixItem.Name}"`, matrixItem.DWV.toFixed(2)];
+                // Sanitize the description just in case!
+                const cleanDesc = String(matrixItem.Name).replace(/[\r\n]+/g, ' ').trim();
+                let currentLineRow = [matrixItem.Code, `"${cleanDesc}"`, matrixItem.DWV.toFixed(2)];
                 let rowTotalDwv = 0;
 
                 encounters.forEach(enc => {
@@ -2026,7 +2026,6 @@ const selectableCustomCodes = [
                     rowTotalDwv += (qty * matrixItem.DWV);
                 });
 
-                // Only add row if someone actually did this procedure
                 if (rowTotalDwv > 0) {
                     currentLineRow.push(rowTotalDwv.toFixed(2));
                     grandTotalDwv += rowTotalDwv;
@@ -2034,26 +2033,58 @@ const selectableCustomCodes = [
                 }
             });
 
-            // 3. Build Bottom Total Row
             let bottomRow = ["", '"GRAND TOTAL"', ""];
             encounters.forEach(() => bottomRow.push(""));
             bottomRow.push(grandTotalDwv.toFixed(2));
             finalCsvDataMatrix.push(bottomRow);
 
-            // 4. Download
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + finalCsvDataMatrix.map(e => e.join(",")).join("\n");
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `IRT_Mission_Full_Report.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // ==========================================
+            // DIAGNOSTIC OUTPUT: Bypass CSV download
+            // ==========================================
+            renderReportToScreen(finalCsvDataMatrix, "Mission Full Report");
 
         } catch (err) { alert(`Export Error: ${err.message}`); }
     }
 
 
+
+
+        // =========================================================================
+    // DIAGNOSTIC SCREEN RENDERER
+    // =========================================================================
+    function renderReportToScreen(matrix, title) {
+        // 1. Log to the Developer Console (Press F12 to view this!)
+        console.log(`\n=== DIAGNOSTICS FOR: ${title} ===`);
+        matrix.forEach((row, index) => {
+            console.log(`Row ${index} has ${row.length} columns.`);
+        });
+        console.table(matrix);
+
+        // 2. Build a popup HTML table to view on screen
+        let html = `
+        <div id="debug-modal" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:9999; overflow:auto; padding:20px; font-family:sans-serif;">
+            <div style="background:#fff; padding:20px; border-radius:8px; min-width:800px; max-width:95%; margin:0 auto;">
+                <button class="btn btn-primary" onclick="document.getElementById('debug-modal').remove()" style="float:right;">Close Report</button>
+                <h2 style="margin-top:0; color:#333;">${title}</h2>
+                <div style="overflow-x:auto;">
+                    <table border="1" style="width:100%; border-collapse:collapse; font-size:0.8rem; text-align:center;">`;
+        
+        matrix.forEach((row, rIdx) => {
+            html += "<tr>";
+            row.forEach(cell => {
+                // If it's one of the top header rows, make it a grey <th>, otherwise standard <td>
+                if (rIdx < 3) html += `<th style="background:#e2e8f0; padding:6px; border:1px solid #cbd5e1;">${cell}</th>`;
+                else html += `<td style="padding:4px; border:1px solid #cbd5e1;">${cell}</td>`;
+            });
+            html += "</tr>";
+        });
+
+        html += `</table></div></div></div>`;
+        
+        const existing = document.getElementById('debug-modal');
+        if(existing) existing.remove();
+        document.body.insertAdjacentHTML('beforeend', html);
+    }
 
 
 
