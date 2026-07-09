@@ -117,9 +117,8 @@
                 <div class="form-group">
                     <label>Assigned Duty Site Location</label>
                     <select id="reg-site">
-                        <option value="Site 1">Site 1</option>
-                        <option value="Site 2">Site 2</option>
-                        <option value="Site 3">Site 3</option>
+                        <option value="West Oso">West Oso</option>
+                        <option value="Calderon">Calderon</option>
                     </select>
                 </div>
             </div>
@@ -135,7 +134,7 @@
         <div class="header-bar">
             <div>
                 <strong id="user-display-name">Loading...</strong>
-                <div style="font-size: 0.8rem; color: var(--gray-600);" id="user-display-meta">Site 1 • USNR</div>
+                <div style="font-size: 0.8rem; color: var(--gray-600);" id="user-display-meta">West Oso • USNR</div>
             </div>
             <button class="btn btn-secondary" id="btn-logout" style="width: auto; padding: 8px 12px; font-size: 0.85rem;"><i class="fa-solid fa-right-from-bracket"></i></button>
         </div>
@@ -166,7 +165,7 @@
                 </div>
 
                 <div class="search-sticky">
-                    <label style="font-weight:600;"><i class="fa-solid fa-filter"></i> Direct Grid Search / Custom Override Filter</label>
+                    <label style="font-weight:600;"><i class="fa-solid fa-filter"></i> Direct Search / Add Code from full DHA list</label>
                     <input type="text" id="search-code" placeholder="Type to filter matrix or add custom code..." oninput="filterCodeMatrix()">
                     
 <div id="custom-override-fields" class="hidden" style="margin-top: 10px; background: var(--gray-100); padding: 10px; border-radius: 6px;">
@@ -176,7 +175,7 @@
             <!-- Options will be populated by the script -->
         </select>
     </div>
-    <button class="btn btn-primary" id="btn-add-custom-code" style="padding: 8px; font-size: 0.9rem;"><i class="fa-solid fa-plus"></i> Inject Selected Code (not for IRT report)</button>
+    <button class="btn btn-primary" id="btn-add-custom-code" style="padding: 8px; font-size: 0.9rem;"><i class="fa-solid fa-plus"></i> Inject Selected Code (to the bottom of the list)</button>
 </div>
 
                 </div>
@@ -1742,19 +1741,17 @@ const selectableCustomCodes = [
         const snapshot = await getDocs(collection(db, "encounters"));
         
         let dayStats = {
-            "Site 1": { pts: 0, procs: 0, dwv: 0 },
-            "Site 2": { pts: 0, procs: 0, dwv: 0 },
-            "Site 3": { pts: 0, procs: 0, dwv: 0 }
+            "West Oso": { pts: 0, procs: 0, dwv: 0 },
+            "Calderon": { pts: 0, procs: 0, dwv: 0 }
         };
         let globalStats = {
-            "Site 1": { pts: 0, procs: 0, dwv: 0 },
-            "Site 2": { pts: 0, procs: 0, dwv: 0 },
-            "Site 3": { pts: 0, procs: 0, dwv: 0 }
+            "West Oso": { pts: 0, procs: 0, dwv: 0 },
+            "Calderon": { pts: 0, procs: 0, dwv: 0 }
         };
 
         snapshot.forEach(docSnap => {
             const enc = docSnap.data();
-            const siteKey = enc.site || "Site 1";
+            const siteKey = enc.site || "West Oso";
             if(!globalStats[siteKey]) return;
 
             let encProcs = 0;
@@ -1821,7 +1818,7 @@ const selectableCustomCodes = [
                 if(enc.date !== targetDay) return;
 
                 const nameKey = enc.providerName || "Unknown Provider";
-                const siteKey = enc.site || "Site 1";
+                const siteKey = enc.site || "West Oso";
                 const branchKey = enc.serviceBranch || "USNR";
 
                 if (!providersMap[nameKey]) {
