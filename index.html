@@ -1951,17 +1951,12 @@ const selectableCustomCodes = [
             bottomRow.push(grandTotalDwv.toFixed(2));
             finalCsvDataMatrix.push(bottomRow);
 
-            // 4. Trigger Download
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + finalCsvDataMatrix.map(e => e.join(",")).join("\n");
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `IRT_Personal_Report_${currentUserProfile.name.replace(/\s+/g, '_')}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // 4. Show On-Screen Preview & Enable Secure Download
+            let filename = `IRT_Personal_Report_${currentUserProfile.name.replace(/\s+/g, '_')}.csv`;
+            showReportPreview(finalCsvDataMatrix, filename, "Personal Full Report");
 
         } catch (err) { alert(`Export Error: ${err.message}`); }
+
     }
 
     // =========================================================================
@@ -2042,17 +2037,11 @@ const selectableCustomCodes = [
             bottomRow.push(grandTotalDwv.toFixed(2));
             finalCsvDataMatrix.push(bottomRow);
 
-            // 4. Download
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + finalCsvDataMatrix.map(e => e.join(",")).join("\n");
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `IRT_Mission_Full_Report.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // 4. Show On-Screen Preview & Enable Secure Download
+            showReportPreview(finalCsvDataMatrix, `IRT_Mission_Full_Report.csv`, "Mission Full Report");
 
         } catch (err) { alert(`Export Error: ${err.message}`); }
+
     }
 
 
