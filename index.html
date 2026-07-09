@@ -1905,50 +1905,37 @@ const selectableCustomCodes = [
                 }
                 if (a.date < b.date) return -1;
                 if (a.date > b.date) return 1;
-                return parseInt(a.patientSequenceNum || 0) - parseInt(b.patientSequenceNum || 0);
+                return (a.patientSequenceNum || 0) - (b.patientSequenceNum || 0);
             });
 
             // --- START OF CORRECTED CSV BUILDING ---
             let csvData = [];
-            
+            const patientColumns = encounters.map(enc => ({
+                provider: `"${enc.providerName || 'Unknown'}"`,
+                date: enc.date || "",
+                ptNum: `"${enc.patientSequenceNum || 0}"`
+            }));
+
             // Build Header Rows
-            const header_Provider = ["Provider", "", ""];
-            const header_Date = ["Date", "", ""];
-            const header_PtNum = ["Patient Record #", "", ""];
-            const header_Code = ["Code", "Description", "DWV"]; // Added back!
-
-            encounters.forEach(enc => {
-                header_Provider.push(`"${enc.providerName || 'Unknown'}"`);
-                header_Date.push(enc.date || "");
-                header_PtNum.push(`"${enc.patientSequenceNum || 0}"`);
-                header_Code.push(""); // Blank column header above the patient's data
-            });
-            
-            header_Provider.push("");
-            header_Date.push("");
-            header_PtNum.push("");
-            header_Code.push("Total DWV");
-
-            // Add headers to the CSV based on scope
             if (scope === 'mission') {
-                csvData.push(header_Provider);
+                csvData.push(['Provider', '', '', ...patientColumns.map(c => c.provider)]);
             }
-            csvData.push(header_Date);
-            csvData.push(header_PtNum);
-            csvData.push(header_Code); // <--- FIX 1: This was missing!
-            
+            csvData.push(['Date', '', '', ...patientColumns.map(c => c.date)]);
+            csvData.push(['Patient Record #', '', '', ...patientColumns.map(c => c.ptNum)]);
+            csvData.push(['Code', 'Description', 'DWV', ...Array(patientColumns.length).fill(''), 'Total DWV']);
+
             // --- Build Procedure Data Rows ---
             let grandTotalDwv = 0;
-            masterRatesMatrix.forEach(matrixItem => {
-                let row = [matrixItem.Code, `"${matrixItem.Name}"`, matrixItem.DWV.toFixed(2)];
+            const allProcedureCodes = [...masterRatesMatrix, ...selectableCustomCodes];
+
+            allProcedureCodes.forEach(matrixItem => {
+                let row = [`"${matrixItem.Code}"`, `"${matrixItem.Name}"`, matrixItem.DWV.toFixed(2)];
                 let rowTotalDwv = 0;
 
                 encounters.forEach(enc => {
-                    // FIX 2: Added a fallback "|| []" so it doesn't crash on empty encounters
                     const procedures = enc.procedures || [];
                     const proc = procedures.find(p => p.code === matrixItem.Code);
                     const qty = proc ? (Number(proc.qty) || 0) : 0;
-                    
                     row.push(qty);
                     rowTotalDwv += (qty * matrixItem.DWV);
                 });
@@ -1959,8 +1946,8 @@ const selectableCustomCodes = [
             });
 
             // --- Build Bottom Right Total Row ---
-            let bottomRow = ["", "GRAND TOTAL", ""];
-            encounters.forEach(() => bottomRow.push(""));
+            let bottomRow = ['', 'GRAND TOTAL', ''];
+            patientColumns.forEach(() => bottomRow.push('')); // Add blank cells for each patient column
             bottomRow.push(grandTotalDwv.toFixed(2));
             csvData.push(bottomRow);
 
@@ -1969,19 +1956,20 @@ const selectableCustomCodes = [
             let encodedUri = encodeURI(csvContent);
             let link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            
+
             let filename = scope === 'mission' ? 'IRT_Mission_Full_Report.csv' : `IRT_Personal_Report_${currentUserProfile.name.replace(/\s+/g, '_')}.csv`;
             link.setAttribute("download", filename);
-            
+
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
-        } catch (err) { 
+        } catch (err) {
             console.error("Export Error:", err);
-            alert(`Export Error: ${err.message}`); 
+            alert(`Export Error: ${err.message}`);
         }
     }
+
 
 
 
