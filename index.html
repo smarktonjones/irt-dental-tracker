@@ -130,7 +130,8 @@
                     <label>Default Duty Site</label>
                     <select id="reg-site">
                         <option value="West Oso">West Oso</option>
-                        <option value="Calderon">Calderon</option>
+                        <option value="Robstown">Robstown</option>
+                        <option value="Mission of Mercy">Mission of Mercy</option>
                     </select>
                 </div>
             </div>
@@ -192,7 +193,8 @@
                     <label>Encounter Site</label>
                     <select id="form-site">
                         <option value="West Oso">West Oso</option>
-                        <option value="Calderon">Calderon</option>
+                        <option value="Robstown">Robstown</option>
+                        <option value="Mission of Mercy">Mission of Mercy</option>
                     </select>
                 </div>
 
@@ -1857,7 +1859,7 @@ const selectableCustomCodes = [
         const snapshot = await getDocs(collection(db, "encounters"));
         
         // Define the new sites
-        const sites = ["West Oso", "Calderon"];
+        const sites = ["West Oso", "Robstown", "Mission of Mercy"];
         let dayStats = Object.fromEntries(sites.map(s => [s, { pts: 0, procs: 0, dwv: 0 }]));
         let globalStats = Object.fromEntries(sites.map(s => [s, { pts: 0, procs: 0, dwv: 0 }]));
 
@@ -2208,7 +2210,14 @@ const selectableCustomCodes = [
                     const d = new Date(enc.timestamp);
                     completionTime = `${d.toLocaleDateString('en-US')} ${d.toLocaleTimeString('en-US')}`;
                 }
-
+                let correctedTime = "";
+                if (enc.date) {
+                    // Convert YYYY-MM-DD from the form to MM/DD/YYYY
+                    const [year, month, day] = enc.date.split("-");
+                    correctedTime = `${parseInt(month, 10)}/${parseInt(day, 10)}/${year} 12:00:00 PM`;
+                } else {
+                    correctedTime = completionTime; // Fallback just in case
+                }
                 // Format the CPT Codes Dental string with duplications for quantity
                 let dentalCodesArray = [];
                 if (enc.procedures && Array.isArray(enc.procedures)) {
@@ -2227,7 +2236,7 @@ const selectableCustomCodes = [
                 const dataRow = [
                     "", // ID
                     completionTime, // Completion time
-                    completionTime, // Corrected Time
+                    correctedTime, // Corrected Time
                     enc.site || "", // Site Location
                     enc.patientId || "", // Patient ID
                     "Dental", // Department
