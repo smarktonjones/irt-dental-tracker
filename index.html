@@ -1613,6 +1613,20 @@ const selectableCustomCodes = [
         document.getElementById('btn-export-personal-full').addEventListener('click', () => generatePersonalFullReport('personal'));
         document.getElementById('btn-export-mission-full').addEventListener('click', () => generateMissionFullReport('mission'));
         document.getElementById('btn-export-data-live').addEventListener('click', generateMissionDataLiveReport);
+
+        document.getElementById('form-site').addEventListener('change', () => {
+             // Only auto-generate if they haven't manually typed an ID yet
+             if(document.getElementById('form-patient-id').value.trim() === "") {
+                 autoGeneratePatientId();
+             } else {
+                 // Optional: Ask them if they want to overwrite their manual entry
+                 if(confirm("Site changed. Update the Patient ID to match?")) {
+                     document.getElementById('form-patient-id').value = ""; // Clear it first
+                     autoGeneratePatientId();
+                 }
+             }
+        });
+        
     }
 
 
@@ -1669,7 +1683,47 @@ const selectableCustomCodes = [
         const q = query(collection(db, "encounters"), where("providerUid", "==", currentUserProfile.uid), where("date", "==", targetDate));
         const snap = await getDocs(q);
         document.getElementById('form-sequence-num').value = snap.size + 1;
+        autoGeneratePatientId();
     }
+
+        // =========================================================================
+    // AUTO-GENERATE PATIENT ID
+    // =========================================================================
+    function autoGeneratePatientId() {
+        const dateInput = document.getElementById('form-date').value;
+        const siteInput = document.getElementById('form-site').value;
+        const seqNumInput = document.getElementById('form-sequence-num').value;
+        const ptIdInput = document.getElementById('form-patient-id');
+
+        // Only auto-generate if we have the necessary data and the field is empty
+        if (!dateInput || !siteInput || !seqNumInput || ptIdInput.value.trim() !== "") {
+            return;
+        }
+
+        // 1. Get the Location Code
+        let locationCode = "";
+        switch (siteInput) {
+            case "West OSO": locationCode = "WO"; break;
+            case "Robstown": locationCode = "RO"; break;
+            case "Mission of Mercy": locationCode = "MOM"; break;
+            default: locationCode = "UNK"; // Unknown fallback
+        }
+
+        // 2. Get the Day of Treatment (just the day number from the YYYY-MM-DD string)
+        // E.g., from "2026-07-13", extract "13"
+        const dayOfTreatment = dateInput.split("-")[2]; 
+
+        // 3. Format the Patient Number (pad with zeros to make it 3 digits)
+        // E.g., "1" becomes "001"
+        const paddedSeqNum = String(seqNumInput).padStart(3, '0');
+
+        // 4. Assemble and set the final ID
+        const generatedId = `${locationCode}${dayOfTreatment}-${paddedSeqNum}`;
+        ptIdInput.value = generatedId;
+    }
+
+
+    
 
     function resetEncounterFormState() {
         currentEditingDocId = null;
