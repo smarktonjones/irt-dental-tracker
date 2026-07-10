@@ -287,6 +287,9 @@
                     <button class="btn btn-primary" id="btn-export-mission-full" style="width:100%; margin-top:10px; background-color: #4f46e5;">
                         <i class="fa-solid fa-globe"></i> Download Mission Full Report
                     </button>
+                    <button class="btn btn-danger" id="btn-export-data-live" style="width:100%; margin-top:10px;">
+                        <i class="fa-solid fa-satellite-dish"></i> IRT Mission DATA_LIVE
+                    </button>
 
                 </div>
             </div>
@@ -325,21 +328,21 @@
     //  PRELOADED PROVIDER ROSTER
     // =========================================================================
     const preloadedProviders = [
-        { docId: "DDS1", lastName: "Conklin", rank: "O4", component: "ANG" },
-        { docId: "DDS2", lastName: "Harmon", rank: "O5", component: "ANG" },
-        { docId: "DDS3", lastName: "Kim", rank: "O4", component: "USAF" },
-        { docId: "DDS4", lastName: "Merchant", rank: "O5", component: "USAF" },
-        { docId: "DDS5", lastName: "Rasmussen", rank: "O5", component: "USAF" },
-        { docId: "DDS6", lastName: "Robbins", rank: "O3", component: "USAF" },
-        { docId: "DDS7", lastName: "Tran", rank: "O3", component: "USAF" },
-        { docId: "DDS8", lastName: "Hoppe", rank: "O5", component: "USMC" },
-        { docId: "DDS9", lastName: "Horning", rank: "O6", component: "USMC" },
-        { docId: "DDS10", lastName: "Ocasio", rank: "O4", component: "USMC" },
-        { docId: "DDS11", lastName: "Phan", rank: "O5", component: "USMC" },
-        { docId: "DDS12", lastName: "Wilson", rank: "O5", component: "USMC" },
-        { docId: "DDS13", lastName: "Hoang", rank: "O4", component: "USNR" },
-        { docId: "DDS14", lastName: "Sundaresan", rank: "O3", component: "USNR" },
-        { docId: "DDS15", lastName: "Villaluz", rank: "O5", component: "USMC" }
+        { docId: "DDS1 - Conklin", lastName: "Conklin", rank: "O4", component: "ANG" },
+        { docId: "DDS2 - Harmon", lastName: "Harmon", rank: "O5", component: "ANG" },
+        { docId: "DDS3 - Kim", lastName: "Kim", rank: "O4", component: "USAF" },
+        { docId: "DDS4 - Merchant", lastName: "Merchant", rank: "O5", component: "USAF" },
+        { docId: "DDS5 - Rasmussen", lastName: "Rasmussen", rank: "O5", component: "USAF" },
+        { docId: "DDS6 - Robbins", lastName: "Robbins", rank: "O3", component: "USAF" },
+        { docId: "DDS7 - Tran", lastName: "Tran", rank: "O3", component: "USAF" },
+        { docId: "DDS8 - Hoppe", lastName: "Hoppe", rank: "O5", component: "USMC" },
+        { docId: "DDS9 - Horning", lastName: "Horning", rank: "O6", component: "USMC" },
+        { docId: "DDS10 - Ocasio", lastName: "Ocasio", rank: "O4", component: "USMC" },
+        { docId: "DDS11 - Phan", lastName: "Phan", rank: "O5", component: "USMC" },
+        { docId: "DDS12 - Wilson", lastName: "Wilson", rank: "O5", component: "USMC" },
+        { docId: "DDS13 - Hoang", lastName: "Hoang", rank: "O4", component: "USNR" },
+        { docId: "DDS14 - Sundaresan", lastName: "Sundaresan", rank: "O3", component: "USNR" },
+        { docId: "DDS15 - Villaluz", lastName: "Villaluz", rank: "O5", component: "USMC" }
     ];
 
 
@@ -1496,7 +1499,7 @@ const selectableCustomCodes = [
         preloadedProviders.forEach(p => {
             let opt = document.createElement('option');
             opt.value = p.docId;
-            opt.text = `${p.docId} - ${p.rank} ${p.lastName}`;
+            opt.text = `${p.docId} - ${p.rank}`;
             prefillSelect.appendChild(opt);
         });
 
@@ -1607,6 +1610,7 @@ const selectableCustomCodes = [
         document.getElementById('btn-export-day-matrix').addEventListener('click', downloadStructuredExcelPasteCsv);
         document.getElementById('btn-export-personal-full').addEventListener('click', () => generatePersonalFullReport('personal'));
         document.getElementById('btn-export-mission-full').addEventListener('click', () => generateMissionFullReport('mission'));
+        document.getElementById('btn-export-data-live').addEventListener('click', generateMissionDataLiveReport);
     }
 
 
@@ -2164,6 +2168,102 @@ const selectableCustomCodes = [
         } catch (err) { alert(`Export Error: ${err.message}`); }
     }
 
+    // =========================================================================
+    // Report: IRT Mission DATA_LIVE Report
+    // =========================================================================
+    async function generateMissionDataLiveReport() {
+        try {
+            const snapshot = await getDocs(collection(db, "encounters"));
+            let encounters = [];
+            snapshot.forEach(docSnap => encounters.push(docSnap.data()));
+
+            if (encounters.length === 0) {
+                alert("No mission records found to generate the report.");
+                return;
+            }
+
+            // Sort encounters by the timestamp, oldest to newest
+            encounters.sort((a, b) => {
+                const timeA = a.timestamp || 0;
+                const timeB = b.timestamp || 0;
+                return new Date(timeA) - new Date(timeB);
+            });
+
+            // 1. Define the exact 20-column header row
+            const headerRow = [
+                "ID", "Completion time", "Corrected Time", "Site Location", "Patient ID", "Department",
+                "CPT Codes Dental", "CPT Codes Medical", "CPT Codes Beh Health", "CPT Codes Vet",
+                "CPT Codes Surgical", "CPT Codes Optometry", "Prescription", "Last Name, First Name",
+                "Date of Birth", "Best Phone Number to Contact for Prescription Glasses Pickup",
+                "Pharm", "Count", "DOC ID", "Comments"
+            ];
+
+            let finalReportMatrix = [headerRow];
+
+            // 2. Process each encounter into the specified format
+            encounters.forEach(enc => {
+                // Format the timestamp
+                let completionTime = "";
+                if (enc.timestamp) {
+                    const d = new Date(enc.timestamp);
+                    completionTime = `${d.toLocaleDateString('en-US')} ${d.toLocaleTimeString('en-US')}`;
+                }
+
+                // Format the CPT Codes Dental string with duplications for quantity
+                let dentalCodesArray = [];
+                if (enc.procedures && Array.isArray(enc.procedures)) {
+                    enc.procedures.forEach(proc => {
+                        const qty = parseInt(proc.qty) || 0;
+                        for (let i = 0; i < qty; i++) {
+                            // Format: "D1234 - Description"
+                            dentalCodesArray.push(`"${proc.code} - ${proc.description}"`);
+                        }
+                    });
+                }
+                // Enclose the array of strings in brackets and outer quotes for the final CSV cell
+                const dentalCodesString = `"[${dentalCodesArray.join(',')}]"`;
+
+                // 3. Build the data row with all 20 columns
+                const dataRow = [
+                    "", // ID
+                    completionTime, // Completion time
+                    completionTime, // Corrected Time
+                    enc.site || "", // Site Location
+                    enc.patientId || "", // Patient ID
+                    "Dental", // Department
+                    dentalCodesString, // CPT Codes Dental
+                    "", // CPT Codes Medical
+                    "", // CPT Codes Beh Health
+                    "", // CPT Codes Vet
+                    "", // CPT Codes Surgical
+                    "", // CPT Codes Optometry
+                    "", // Prescription
+                    "", // Last Name, First Name
+                    "", // Date of Birth
+                    "", // Best Phone Number...
+                    "", // Pharm
+                    "", // Count
+                    enc.docId || "", // DOC ID
+                    ""  // Comments
+                ];
+                
+                finalReportMatrix.push(dataRow);
+            });
+
+            // 4. Show On-Screen Preview & Enable Secure Download
+            showReportPreview(finalReportMatrix, 'IRT_Mission_DATA_LIVE.csv', "IRT Mission DATA_LIVE", 1); // Only 1 header row
+
+        } catch (err) {
+            console.error("DATA_LIVE Export Error:", err);
+            alert(`Export Error: ${err.message}`);
+        }
+    }
+
+
+
+
+
+    
 
     // =========================================================================
     // ON-SCREEN PREVIEW & SECURE CSV DOWNLOAD
