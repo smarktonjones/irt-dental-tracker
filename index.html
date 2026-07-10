@@ -2229,8 +2229,11 @@ const selectableCustomCodes = [
                         }
                     });
                 }
-                // Enclose the array of strings in brackets and outer quotes for the final CSV cell
-                const dentalCodesString = `"[${dentalCodesArray.join(',')}]"`;
+
+                // Enclose the array of strings in brackets for the content
+                const dentalCodesContent = `[${dentalCodesArray.join(',')}]`;
+                // NOW, wrap the entire final string in a single pair of double quotes for CSV safety
+                const dentalCodesString = `"${dentalCodesContent.replace(/"/g, '""')}"`;
 
                 // 3. Build the data row with all 20 columns
                 const dataRow = [
