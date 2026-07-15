@@ -94,7 +94,7 @@
 
     <!-- AUTHENTICATION SCREEN -->
     <div id="auth-screen" class="card">
-        <h2 id="auth-title"><i class="fa-solid fa-user-shield"></i> Provider Login</h2>
+        <h2 id="auth-title"><i class="fa-solid fa-user-shield"></i> Admin Login</h2>
         <form id="auth-form">
             <div class="form-group">
                 <label>Email Address</label>
@@ -151,8 +151,13 @@
     <div id="app-screen" class="hidden">
         <div class="header-bar">
             <div>
-                <strong id="user-display-name">Loading...</strong>
-                <div style="font-size: 0.8rem; color: var(--gray-600);" id="user-display-meta">West Oso • USNR</div>
+                <div style="font-size: 0.8rem; color: var(--gray-600); margin-bottom: 4px; font-weight:bold;">
+                    <i class="fa-solid fa-user-tie"></i> Admin Mode: Acting As
+                </div>
+                <select id="admin-provider-selector" style="padding: 5px; border-radius: 4px; border: none; font-weight: bold; width: 100%; max-width: 300px; color: var(--primary);">
+                    <option value="">Loading Providers...</option>
+                </select>
+                <div id="user-display-meta" style="margin-top: 5px; font-size: 0.8rem; color: var(--gray-600);">Default Site: Loading...</div>
             </div>
             <button class="btn btn-secondary" id="btn-logout" style="width: auto; padding: 8px 12px; font-size: 0.85rem;"><i class="fa-solid fa-right-from-bracket"></i></button>
         </div>
@@ -325,6 +330,8 @@
     let currentEncounterData = {}; 
     let userFavoriteCodes = [];
     let sortableInstance = null;
+    let allRegisteredUsers = []; // Holds the full list of users from the DB
+
 
     // =========================================================================
     //  PRELOADED PROVIDER ROSTER
@@ -1426,6 +1433,73 @@ const selectableCustomCodes = [
             console.error("Error saving favorites:", error);
         }
     }
+
+    // =========================================================================
+    // ADMIN FUNCTIONS
+    // =========================================================================
+    async function initializeAdminDashboard() {
+        const selector = document.getElementById('admin-provider-selector');
+        
+        try {
+            // Fetch ALL users from the database
+            const snapshot = await getDocs(collection(db, "users"));
+            allRegisteredUsers = [];
+            snapshot.forEach(docSnap => allRegisteredUsers.push(docSnap.data()));
+
+            // Sort them alphabetically by DOC ID or Name
+            allRegisteredUsers.sort((a, b) => {
+                const idA = a.docId || a.name || "Z";
+                const idB = b.docId || b.name || "Z";
+                return idA.localeCompare(idB);
+            });
+
+            // Populate the dropdown
+            selector.innerHTML = '';
+            allRegisteredUsers.forEach(user => {
+                let opt = document.createElement('option');
+                opt.value = user.uid; // We use the UID as the unique key
+                opt.text = `${user.docId || ''} - ${user.name}`;
+                selector.appendChild(opt);
+            });
+
+            // Set the dropdown to the person who actually logged in initially
+            if (currentUserProfile) {
+                selector.value = currentUserProfile.uid;
+                document.getElementById('user-display-meta').innerText = `Default Site: ${currentUserProfile.site} • ${currentUserProfile.component}`;
+            }
+
+            // --- THE MAGIC: Listen for changes and spoof the profile ---
+            selector.addEventListener('change', async (e) => {
+                const selectedUid = e.target.value;
+                const targetUser = allRegisteredUsers.find(u => u.uid === selectedUid);
+                
+                if (targetUser) {
+                    // 1. Spoof the global profile!
+                    currentUserProfile = targetUser;
+                    
+                    // 2. Update the visual meta-data
+                    document.getElementById('user-display-meta').innerText = `Default Site: ${currentUserProfile.site} • ${currentUserProfile.component}`;
+                    
+                    // 3. Reset the form state so the new site populates
+                    resetEncounterFormState();
+                    
+                    // 4. Reload the Favorites for the new target user
+                    await loadUserFavorites(targetUser.uid);
+                    
+                    // 5. Reload the Personal History dashboard for the new target user
+                    if (document.getElementById('tab-personal').classList.contains('active')) {
+                        loadPersonalProviderMetricsDashboard();
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error("Error loading users for admin:", error);
+            selector.innerHTML = '<option value="">Error Loading Providers</option>';
+        }
+    }
+
+    
     
     // Handles loading favorites from Firestore
     // Handles loading favorites from Firestore AND restoring custom injected codes
@@ -1638,11 +1712,12 @@ const selectableCustomCodes = [
             const userDoc = await getDoc(doc(db, "users", user.uid));
             if (userDoc.exists()) {
                 currentUserProfile = userDoc.data();
-                document.getElementById('user-display-name').innerText = currentUserProfile.name;
-                document.getElementById('user-display-meta').innerText = `Default Site: ${currentUserProfile.site} • ${currentUserProfile.component}`;
-
                 
-                // New: Load favorites and then render the app
+                // IN ADMIN.HTML, we don't set the innerText directly.
+                // Instead, we initialize the massive dropdown!
+                await initializeAdminDashboard();
+                
+                // Then load favorites for the initially logged-in user
                 await loadUserFavorites(user.uid);
 
                 document.getElementById('auth-screen').classList.add('hidden');
@@ -1651,11 +1726,13 @@ const selectableCustomCodes = [
             }
         } else {
             currentUserProfile = null;
-            userFavoriteCodes = []; // Clear favorites on logout
+            userFavoriteCodes = [];
+            allRegisteredUsers = []; // Clear the user list on logout
             document.getElementById('auth-screen').classList.remove('hidden');
             document.getElementById('app-screen').classList.add('hidden');
         }
     });
+
 
 
     window.switchView = function(viewName) {
@@ -1745,6 +1822,8 @@ const selectableCustomCodes = [
         document.getElementById('edit-mode-banner').classList.add('hidden');
         document.getElementById('form-date').valueAsDate = new Date();
         document.getElementById('form-patient-id').value = "";
+        // Ensure the site dropdown resets to the spoofed user's default site
+        if (currentUserProfile) document.getElementById('form-site').value = currentUserProfile.site;
         document.querySelectorAll('.count-val').forEach(el => el.innerText = "0");
         buildCodeMatrixLayout();
         calculateNextActiveSequenceNumber();
