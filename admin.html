@@ -175,6 +175,7 @@
                 
                 <div id="edit-mode-banner" class="edit-banner hidden">
                     <span><i class="fa-solid fa-user-pen"></i> Editing Patient Record <strong id="edit-target-label">#0</strong></span>
+                    <button class="btn-link" id="btn-delete-encounter" style="color:var(--danger); font-weight:bold; margin-right: 15px;"><i class="fa-solid fa-trash-can"></i> Delete</button>
                     <button class="btn-link" style="color:#b45309; font-weight:bold;" onclick="cancelEditMode()">Cancel Edit</button>
                 </div>
 
@@ -1688,6 +1689,8 @@ const selectableCustomCodes = [
         document.getElementById('btn-export-mission-full').addEventListener('click', () => generateMissionFullReport('mission'));
         document.getElementById('btn-export-data-live').addEventListener('click', generateMissionDataLiveReport);
 
+        document.getElementById('btn-delete-encounter').addEventListener('click', deleteCurrentEncounter);
+        
         document.getElementById('form-site').addEventListener('change', () => {
              // Only auto-generate if they haven't manually typed an ID yet
              if(document.getElementById('form-patient-id').value.trim() === "") {
@@ -2483,6 +2486,60 @@ const selectableCustomCodes = [
         });
     }
 
+    // =========================================================================
+    //  NEW FUNCTION: SOFT DELETE ENCOUNTER
+    // =========================================================================
+    async function deleteCurrentEncounter() {
+        if (!currentEditingDocId) {
+            alert("No active record is being edited. Cannot delete.");
+            return;
+        }
+
+        if (!confirm("Are you sure you want to permanently delete this encounter? This action cannot be undone.")) {
+            return;
+        }
+
+        try {
+            console.log(`Attempting to delete encounter with ID: ${currentEditingDocId}`);
+
+            // 1. Get the document we want to "delete"
+            const encounterRef = doc(db, "encounters", currentEditingDocId);
+            const encounterSnap = await getDoc(encounterRef);
+
+            if (!encounterSnap.exists()) {
+                alert("Error: The record could not be found. It may have already been deleted.");
+                resetEncounterFormState();
+                return;
+            }
+
+            const encounterData = encounterSnap.data();
+
+            // 2. Create a new document in the 'deleted_encounters' collection
+            // We use the same ID for easy tracking and potential restoration.
+            const deletedEncounterRef = doc(db, "deleted_encounters", currentEditingDocId);
+            await setDoc(deletedEncounterRef, {
+                ...encounterData,
+                deletedBy: currentUserProfile.docId || currentUserProfile.name,
+                deletedAt: new Date().toISOString()
+            });
+
+            // 3. Permanently delete the original document from the 'encounters' collection
+            await deleteDoc(encounterRef);
+
+            alert("Encounter successfully deleted and archived.");
+            
+            // 4. Reset the form to a clean state
+            resetEncounterFormState();
+            // Optionally, refresh the personal dashboard view if it's active
+            if(document.getElementById('tab-dashboard').classList.contains('active')) {
+                loadPersonalProviderMetricsDashboard();
+            }
+
+        } catch (err) {
+            console.error("Error during encounter deletion:", err);
+            alert(`Deletion Failed: ${err.message}`);
+        }
+    }
 
 
 
