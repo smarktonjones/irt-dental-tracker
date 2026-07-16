@@ -1689,7 +1689,7 @@ const selectableCustomCodes = [
         document.getElementById('btn-export-mission-full').addEventListener('click', () => generateMissionFullReport('mission'));
         document.getElementById('btn-export-data-live').addEventListener('click', generateMissionDataLiveReport);
 
-        document.getElementById('btn-delete-encounter').addEventListener('click', deleteCurrentEncounter);
+        document.getElementById('btn-delete-encounter').setAttribute('onclick', 'deleteCurrentEncounter()');
         
         document.getElementById('form-site').addEventListener('change', () => {
              // Only auto-generate if they haven't manually typed an ID yet
@@ -2489,7 +2489,7 @@ const selectableCustomCodes = [
     // =========================================================================
     //  NEW FUNCTION: SOFT DELETE ENCOUNTER
     // =========================================================================
-    async function deleteCurrentEncounter() {
+    window.deleteCurrentEncounter = async function() {
         if (!currentEditingDocId) {
             alert("No active record is being edited. Cannot delete.");
             return;
